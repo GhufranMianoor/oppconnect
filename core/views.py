@@ -199,8 +199,8 @@ def create_open_request(request):
 def match_requests(request):
     team = get_my_team(request.user)
     incoming = MatchRequest.objects.filter(to_team=team, status="pending").exclude(from_team=team).select_related("from_team").order_by("proposed_date")
-    sent = MatchRequest.objects.filter(from_team=team).exclude(to_team=team).exclude(status="pending").select_related("to_team").order_by("-created_at")
-    open_requests = MatchRequest.objects.filter(from_team=team, to_team=team).order_by("-created_at")
+    sent = MatchRequest.objects.filter(from_team=team).exclude(to_team=team).select_related("to_team").order_by("-created_at")
+    open_requests = MatchRequest.objects.filter(from_team=team, to_team__isnull=True).order_by("-created_at")
     return render(request, "core/match_requests.html", {
         "team": team, "incoming": incoming, "sent": sent, "open_requests": open_requests,
     })
