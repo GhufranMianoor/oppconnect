@@ -14,6 +14,9 @@
 <body>
 <div class="app">
   {% if request.user.is_authenticated %}
+  <input type="checkbox" id="nav-toggle" class="nav-toggle">
+  <label for="nav-toggle" class="sidebar-backdrop"></label>
+
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="logo-badge"><i class="fa-solid fa-futbol"></i></div>
@@ -49,7 +52,10 @@
   <main class="main">
     {% if request.user.is_authenticated %}
     <div class="topbar">
-      <div class="location"><i class="fa-solid fa-location-dot"></i> {{ my_team.city|default:"Karachi, Pakistan" }}</div>
+      <div class="location">
+        <label for="nav-toggle" class="nav-toggle-label"><span></span></label>
+        <i class="fa-solid fa-location-dot"></i> {{ my_team.city|default:"Karachi, Pakistan" }}
+      </div>
       <div class="topbar-right">
         <a href="{% url 'core:notifications' %}" class="bell"><i class="fa-solid fa-bell"></i>{% if unread_count %}<span class="dot">{{ unread_count }}</span>{% endif %}</a>
         <div class="user-chip">
