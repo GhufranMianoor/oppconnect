@@ -79,6 +79,7 @@ img{max-width:100%;}
 }
 .sidebar-nav a:hover{background:var(--sidebar-hover);color:#fff;}
 .sidebar-nav a.active{background:var(--accent);color:#fff;}
+.sidebar-nav button:hover{background:var(--sidebar-hover);color:#fff;}
 .sidebar-nav .icon{width:18px;text-align:center;flex-shrink:0;}
 .sidebar-nav .badge-count{
   margin-left:auto;background:var(--accent);color:#fff;
@@ -333,11 +334,8 @@ img{max-width:100%;}
     transition:transform .25s ease;
     box-shadow:2px 0 24px rgba(0,0,0,.25);
   }
-  .nav-toggle:checked ~ .app .sidebar,
-  .nav-toggle:checked + .nav-toggle-label + .app .sidebar{
-    transform:translateX(0);
-  }
-  /* Sidebar shown via checkbox hack: toggle placed before .app in markup */
+  /* Checkbox hack: #nav-toggle, .sidebar-backdrop, and .sidebar are all
+     siblings inside .app, so a plain general-sibling selector is enough. */
   .nav-toggle:checked ~ .sidebar{transform:translateX(0);}
   .nav-toggle:checked ~ .sidebar-backdrop{display:block;}
 

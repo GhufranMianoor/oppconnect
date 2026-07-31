@@ -30,7 +30,14 @@
       <li><a href="{% url 'core:my_team' %}" class="{% if request.resolver_match.url_name == 'my_team' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-users"></i></span> My Team</a></li>
       <li><a href="{% url 'core:inbox' %}" class="{% if request.resolver_match.url_name == 'inbox' or request.resolver_match.url_name == 'conversation' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-comment-dots"></i></span> Messages</a></li>
       <li><a href="{% url 'core:notifications' %}" class="{% if request.resolver_match.url_name == 'notifications' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-bell"></i></span> Notifications{% if unread_count %}<span class="badge-count">{{ unread_count }}</span>{% endif %}</a></li>
-      <li><a href="{% url 'accounts:logout' %}"><span class="icon"><i class="fa-solid fa-right-from-bracket"></i></span> Logout</a></li>
+      <li>
+        <form method="post" action="{% url 'accounts:logout' %}" style="margin:0;">
+          {% csrf_token %}
+          <button type="submit" style="all:unset;display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;color:#c7cad1;font-size:14.5px;font-weight:500;width:100%;cursor:pointer;box-sizing:border-box;">
+            <span class="icon"><i class="fa-solid fa-right-from-bracket"></i></span> Logout
+          </button>
+        </form>
+      </li>
     </ul>
     <div class="sidebar-promo">
       <h4>Play More.<br><span>Compete Better.</span></h4>
