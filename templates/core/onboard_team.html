@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Create Your Team{% endblock %}
+{% block content %}
+<h1 class="page-title">Create Your Team Profile</h1>
+<p class="page-sub">Set up your squad so other teams can find and challenge you.</p>
+<div class="card form-card">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="form-group"><label>Team Name</label>{{ form.name }}</div>
+    <div class="form-group"><label>Logo</label>{{ form.logo }}</div>
+    <div class="form-group"><label>Bio</label>{{ form.bio }}</div>
+    <div class="form-row">
+      <div class="form-group"><label>Home Ground</label>{{ form.home_ground }}</div>
+      <div class="form-group"><label>City</label>{{ form.city }}</div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Level</label>{{ form.level }}</div>
+      <div class="form-group"><label>Playstyle</label>{{ form.playstyle }}</div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-block">Create Team</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Find Teams{% endblock %}
+{% block content %}
+<h1 class="page-title">Find Teams</h1>
+<p class="page-sub">Search opponents by level, playstyle, ground and city.</p>
+
+<form method="get" class="filters-bar card">
+  <div class="form-group">
+    <label>Search</label>
+    {{ form.q }}
+  </div>
+  <div class="form-group">
+    <label>Level</label>
+    {{ form.level }}
+  </div>
+  <div class="form-group">
+    <label>Playstyle</label>
+    {{ form.playstyle }}
+  </div>
+  <div class="form-group">
+    <label>City</label>
+    {{ form.city }}
+  </div>
+  <button class="btn btn-primary" type="submit">Apply Filters</button>
+</form>
+
+<div style="margin-top:20px;">
+{% for t in teams %}
+  <div class="team-list-card">
+    <div class="team-list-left">
+      <div class="club-badge">{{ t.name|slice:":2"|upper }}</div>
+      <div>
+        <h4 style="margin:0 0 3px;font-size:14.5px;">{{ t.name }}</h4>
+        <div class="meta-row">
+          <span class="badge badge-{{ t.level }}">{{ t.get_level_display }}</span>
+          <span><i class="fa-solid fa-bullseye"></i> {{ t.get_playstyle_display }}</span>
+        </div>
+        <div class="meta-row"><span><i class="fa-solid fa-location-dot"></i> {{ t.home_ground|default:t.city }}, {{ t.city }}</span></div>
+      </div>
+    </div>
+    <div class="team-metrics">
+      <div class="metric"><div class="num">{{ t.reliability }}%</div><div class="label">Reliability</div></div>
+      <a href="{% url 'core:team_profile' t.pk %}" class="btn btn-outline btn-sm">View Profile</a>
+    </div>
+  </div>
+{% empty %}
+  <p class="page-sub">No teams match your filters yet.</p>
+{% endfor %}
+</div>
+{% endblock %}

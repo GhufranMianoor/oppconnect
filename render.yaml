@@ -1,0 +1,24 @@
+# Render "Blueprint" - lets you deploy the web service + free Postgres
+# in one go via https://dashboard.render.com/blueprints (New +  -> Blueprint).
+services:
+  - type: web
+    name: oppconnect
+    runtime: python
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn oppconnect.wsgi:application"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: PYTHON_VERSION
+        value: "3.12.4"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: oppconnect-db
+          property: connectionString
+
+databases:
+  - name: oppconnect-db
+    plan: free

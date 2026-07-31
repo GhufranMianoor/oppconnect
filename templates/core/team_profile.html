@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ profile_team.name }}{% endblock %}
+{% block content %}
+<div class="profile-header">
+  <div class="club-badge">{{ profile_team.name|slice:":2"|upper }}</div>
+  <div style="flex:1;">
+    <h1 class="page-title" style="margin-bottom:6px;">{{ profile_team.name }}</h1>
+    <div class="meta-row">
+      <span class="badge badge-{{ profile_team.level }}">{{ profile_team.get_level_display }}</span>
+      <span><i class="fa-solid fa-bullseye"></i> {{ profile_team.get_playstyle_display }}</span>
+      <span><i class="fa-solid fa-location-dot"></i> {{ profile_team.home_ground|default:profile_team.city }}, {{ profile_team.city }}</span>
+    </div>
+  </div>
+  {% if not is_own and team %}
+  <div style="display:flex;gap:10px;">
+    <a href="{% url 'core:start_conversation' profile_team.pk %}" class="btn btn-outline"><i class="fa-solid fa-comment-dots"></i> Message</a>
+    <a href="{% url 'core:send_match_request' profile_team.pk %}" class="btn btn-primary">Send Match Request</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="two-col">
+  <div>
+    <div class="card" style="margin-bottom:18px;">
+      <h3 style="margin-top:0;">About</h3>
+      <p class="page-sub" style="margin:0;">{{ profile_team.bio|default:"This team hasn't added a bio yet." }}</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">Recent Matches</h3>
+      {% for m in recent_matches %}
+        <div class="match-row">
+          <div class="result-chip {% if m.result == 'W' %}badge-win{% elif m.result == 'D' %}badge-draw{% else %}badge-loss{% endif %}">{{ m.result }}</div>
+          <div><div class="opp">vs {{ m.opponent }}</div><div class="date">{{ m.date|date:"d M Y" }}</div></div>
+          <div class="score">{{ m.score }}</div>
+        </div>
+      {% empty %}
+        <p class="page-sub">No matches played yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+  <div>
+    <div class="card">
+      <h3 style="margin-top:0;font-size:15.5px;">Team Stats</h3>
+      <div style="display:flex;justify-content:space-between;font-size:13.5px;"><span>Win Rate</span><strong>{{ profile_team.win_rate }}%</strong></div>
+      <div class="win-bar"><div class="win-bar-fill" style="width:{{ profile_team.win_rate }}%;"></div></div>
+      <div class="stats-list">
+        <div class="stat-row"><span>Matches Played</span><strong>{{ profile_team.matches_played }}</strong></div>
+        <div class="stat-row"><span>Wins</span><strong>{{ profile_team.wins }}</strong></div>
+        <div class="stat-row"><span>Draws</span><strong>{{ profile_team.draws }}</strong></div>
+        <div class="stat-row"><span>Losses</span><strong>{{ profile_team.losses }}</strong></div>
+        <div class="stat-row"><span>Reliability</span><strong>{{ profile_team.reliability }}%</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

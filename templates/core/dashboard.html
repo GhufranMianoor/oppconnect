@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load core_extras %}
+{% block title %}Dashboard - OppConnect{% endblock %}
+{% block content %}
+<h1 class="page-title">Welcome back, {{ request.user.get_full_name|default:request.user.username }}!</h1>
+<p class="page-sub">Find opponents, schedule matches and grow your team.</p>
+
+<div class="grid-4">
+  <div class="card stat-card"><div class="stat-icon" style="background:#fee2e2;color:#dc2626;"><i class="fa-solid fa-trophy"></i></div><div><div class="stat-value">{{ team.matches_played }}</div><div class="stat-label">Matches Played</div></div></div>
+  <div class="card stat-card"><div class="stat-icon" style="background:#dcfce7;color:#16a34a;"><i class="fa-solid fa-medal"></i></div><div><div class="stat-value">{{ team.wins }}</div><div class="stat-label">Wins</div></div></div>
+  <div class="card stat-card"><div class="stat-icon" style="background:#fef3c7;color:#d97706;"><i class="fa-solid fa-handshake"></i></div><div><div class="stat-value">{{ team.draws }}</div><div class="stat-label">Draws</div></div></div>
+  <div class="card stat-card"><div class="stat-icon" style="background:#dbeafe;color:#2563eb;"><i class="fa-solid fa-shield-halved"></i></div><div><div class="stat-value">{{ team.losses }}</div><div class="stat-label">Losses</div></div></div>
+</div>
+
+<div class="two-col">
+  <div>
+    <div class="section-head"><h3>Match Requests</h3><a href="{% url 'core:match_requests' %}">View All</a></div>
+    {% for r in pending_requests %}
+      <div class="request-card">
+        <div class="request-info">
+          <div class="club-badge">{{ r.from_team.name|slice:":2"|upper }}</div>
+          <div>
+            <h4>{{ r.from_team.name }}</h4>
+            <div class="meta-row">
+              <span><i class="fa-solid fa-signal"></i> {{ r.from_team.get_level_display }}</span>
+            </div>
+            <div class="meta-row"><span><i class="fa-solid fa-location-dot"></i> {{ r.venue }}</span></div>
+          </div>
+        </div>
+        <div class="request-details">
+          <div><i class="fa-solid fa-calendar-days"></i> {{ r.proposed_date|date:"D, d M" }}</div>
+          <div><i class="fa-solid fa-clock"></i> {{ r.proposed_time|time:"g:i A" }}</div>
+        </div>
+        <div class="request-actions">
+          <form method="post" action="{% url 'core:respond_request' r.pk 'accept' %}"><button class="btn btn-primary btn-sm" style="border:1px solid var(--accent);background:#fff;color:var(--accent);" type="submit">Accept</button></form>
+          <form method="post" action="{% url 'core:respond_request' r.pk 'decline' %}"><button class="btn btn-outline btn-sm" type="submit">Decline</button></form>
+        </div>
+      </div>
+    {% empty %}
+      <p class="page-sub">No pending match requests right now.</p>
+    {% endfor %}
+
+    <div class="section-head" style="margin-top:26px;"><h3>Nearby Teams</h3><a href="{% url 'core:find_teams' %}">View All</a></div>
+    {% for t in nearby_teams %}
+      <div class="team-list-card">
+        <div class="team-list-left">
+          <div class="club-badge">{{ t.name|slice:":2"|upper }}</div>
+          <div>
+            <h4 style="margin:0 0 3px;font-size:14.5px;">{{ t.name }}</h4>
+            <div class="meta-row"><span><i class="fa-solid fa-signal"></i> {{ t.get_level_display }}</span></div>
+            <div class="meta-row"><span><i class="fa-solid fa-location-dot"></i> {{ t.city }}</span></div>
+          </div>
+        </div>
+        <div class="team-metrics">
+          <div class="metric"><div class="num">{{ t.reliability }}%</div><div class="label">Reliability</div></div>
+          <a href="{% url 'core:team_profile' t.pk %}" class="btn btn-outline btn-sm">View Profile</a>
+        </div>
+      </div>
+    {% empty %}
+      <p class="page-sub">No other teams in your city yet.</p>
+    {% endfor %}
+
+    <div class="cta-band">
+      <div class="cta-band-left">
+        <div class="cta-icon">🧑‍<i class="fa-solid fa-handshake"></i>‍🧑</div>
+        <div>
+          <strong>Don't see the right opponent?</strong><br>
+          <span class="page-sub" style="margin:0;">Post a match request and let teams come to you.</span>
+        </div>
+      </div>
+      <a href="{% url 'core:create_open_request' %}" class="btn btn-primary">Create Request</a>
+    </div>
+  </div>
+
+  <div>
+    <div class="card" style="margin-bottom:18px;">
+      <div class="section-head" style="margin-bottom:10px;"><h3 style="font-size:15.5px;margin:0;">Availability</h3></div>
+      <div class="mini-cal">
+        <div class="mini-cal-head">
+          <a href="?month={{ prev_month }}&year={{ prev_year }}">‹</a>
+          <span>{{ month_name }} {{ year }}</span>
+          <a href="?month={{ next_month }}&year={{ next_year }}">›</a>
+        </div>
+        <table>
+          <tr><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr>
+          {% for week in month_days %}
+          <tr>
+            {% for day in week %}
+              <td>
+                {% if day != 0 %}
+                  <details style="position:relative;">
+                    <summary style="list-style:none;cursor:pointer;">
+                      <span class="day-cell {% if day == today.day and month == today.month and year == today.year %}today{% endif %}">
+                        {{ day }}
+                        {% with day_status=avail_map|get_item:day %}
+                          {% if day_status %}<span class="dot-status dot-{{ day_status }}"></span>{% endif %}
+                        {% endwith %}
+                      </span>
+                    </summary>
+                    <div style="position:absolute;z-index:10;background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);top:32px;left:0;display:flex;gap:4px;">
+                      <form method="post" action="{% url 'core:set_availability' %}"><input type="hidden" name="date" value="{{ year }}-{{ month }}-{{ day }}"><input type="hidden" name="status" value="available">{% csrf_token %}<button class="btn btn-sm" style="background:var(--green);color:#fff;padding:4px 8px;" title="Available">A</button></form>
+                      <form method="post" action="{% url 'core:set_availability' %}"><input type="hidden" name="date" value="{{ year }}-{{ month }}-{{ day }}"><input type="hidden" name="status" value="maybe">{% csrf_token %}<button class="btn btn-sm" style="background:var(--amber);color:#fff;padding:4px 8px;" title="Maybe">M</button></form>
+                      <form method="post" action="{% url 'core:set_availability' %}"><input type="hidden" name="date" value="{{ year }}-{{ month }}-{{ day }}"><input type="hidden" name="status" value="unavailable">{% csrf_token %}<button class="btn btn-sm" style="background:#9ca3af;color:#fff;padding:4px 8px;" title="Not Available">N</button></form>
+                    </div>
+                  </details>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </table>
+        <div class="legend">
+          <span><i class="dot" style="background:var(--green);"></i>Available</span>
+          <span><i class="dot" style="background:var(--amber);"></i>Maybe</span>
+          <span><i class="dot" style="background:#9ca3af;"></i>Not Available</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <h3 style="margin-top:0;font-size:15.5px;">Team Stats</h3>
+      <div style="display:flex;justify-content:space-between;font-size:13.5px;"><span>Win Rate</span><strong>{{ team.win_rate }}%</strong></div>
+      <div class="win-bar"><div class="win-bar-fill" style="width:{{ team.win_rate }}%;"></div></div>
+      <div class="stats-list">
+        <div class="stat-row"><span>Goals Scored</span><strong>{{ team.goals_scored }}</strong></div>
+        <div class="stat-row"><span>Goals Conceded</span><strong>{{ team.goals_conceded }}</strong></div>
+        <div class="stat-row"><span>Clean Sheets</span><strong>{{ team.clean_sheets }}</strong></div>
+        <div class="stat-row"><span>Matches Played</span><strong>{{ team.matches_played }}</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-head" style="margin-bottom:10px;"><h3 style="font-size:15.5px;">Recent Matches</h3><a href="{% url 'core:my_team' %}">View All</a></div>
+      {% for m in recent_matches %}
+        <div class="match-row">
+          <div class="result-chip {% if m.result == 'W' %}badge-win{% elif m.result == 'D' %}badge-draw{% else %}badge-loss{% endif %}">
+            {{ m.result }}
+          </div>
+          <div>
+            <div class="opp">vs {{ m.opponent }}</div>
+            <div class="date">{{ m.date|date:"d M Y" }}</div>
+          </div>
+          <div class="score">{{ m.score }}</div>
+        </div>
+      {% empty %}
+        <p class="page-sub">No matches played yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

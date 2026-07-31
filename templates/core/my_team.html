@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}My Team{% endblock %}
+{% block content %}
+<h1 class="page-title">My Team</h1>
+<p class="page-sub">Manage your team profile, level, playstyle and home ground.</p>
+
+<div class="two-col">
+  <div class="card form-card">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group"><label>Team Name</label>{{ form.name }}</div>
+      <div class="form-group"><label>Logo</label>{{ form.logo }}</div>
+      <div class="form-group"><label>Bio</label>{{ form.bio }}</div>
+      <div class="form-row">
+        <div class="form-group"><label>Home Ground</label>{{ form.home_ground }}</div>
+        <div class="form-group"><label>City</label>{{ form.city }}</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Level</label>{{ form.level }}</div>
+        <div class="form-group"><label>Playstyle</label>{{ form.playstyle }}</div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;font-size:15.5px;">Overview</h3>
+    <div class="stats-list">
+      <div class="stat-row"><span>Matches Played</span><strong>{{ team.matches_played }}</strong></div>
+      <div class="stat-row"><span>Win Rate</span><strong>{{ team.win_rate }}%</strong></div>
+      <div class="stat-row"><span>Reliability</span><strong>{{ team.reliability }}%</strong></div>
+    </div>
+    <a href="{% url 'core:team_profile' team.pk %}" class="btn btn-outline btn-block" style="margin-top:14px;">View Public Profile</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Match Requests{% endblock %}
+{% block content %}
+<div class="section-head"><h1 class="page-title" style="margin:0;">Match Requests</h1><a href="{% url 'core:create_open_request' %}" class="btn btn-primary">+ Create Request</a></div>
+<p class="page-sub">Manage incoming challenges and track requests you've sent.</p>
+
+<div class="section-head" style="margin-top:22px;"><h3>Incoming Requests</h3></div>
+{% for r in incoming %}
+  <div class="request-card">
+    <div class="request-info">
+      <div class="club-badge">{{ r.from_team.name|slice:":2"|upper }}</div>
+      <div>
+        <h4>{{ r.from_team.name }}</h4>
+        <div class="meta-row"><span><i class="fa-solid fa-location-dot"></i> {{ r.venue }}</span></div>
+      </div>
+    </div>
+    <div class="request-details">
+      <div><i class="fa-solid fa-calendar-days"></i> {{ r.proposed_date|date:"D, d M" }}</div>
+      <div><i class="fa-solid fa-clock"></i> {{ r.proposed_time|time:"g:i A" }}</div>
+    </div>
+    <div class="request-actions">
+      <form method="post" action="{% url 'core:respond_request' r.pk 'accept' %}"><button class="btn btn-primary btn-sm">Accept</button></form>
+      <form method="post" action="{% url 'core:respond_request' r.pk 'decline' %}"><button class="btn btn-outline btn-sm">Decline</button></form>
+    </div>
+  </div>
+{% empty %}
+  <p class="page-sub">No incoming requests.</p>
+{% endfor %}
+
+<div class="section-head" style="margin-top:26px;"><h3>Sent Requests</h3></div>
+{% for r in sent %}
+  <div class="request-card">
+    <div class="request-info">
+      <div class="club-badge">{{ r.to_team.name|slice:":2"|upper }}</div>
+      <div>
+        <h4>{{ r.to_team.name }}</h4>
+        <div class="meta-row"><span><i class="fa-solid fa-location-dot"></i> {{ r.venue }}</span></div>
+      </div>
+    </div>
+    <div class="request-details">
+      <div><i class="fa-solid fa-calendar-days"></i> {{ r.proposed_date|date:"D, d M" }}</div>
+      <span class="badge {% if r.status == 'accepted' %}badge-win{% elif r.status == 'declined' %}badge-loss{% else %}badge-casual{% endif %}">{{ r.get_status_display }}</span>
+    </div>
+  </div>
+{% empty %}
+  <p class="page-sub">No sent requests yet.</p>
+{% endfor %}
+
+<div class="section-head" style="margin-top:26px;"><h3>Your Open Requests</h3></div>
+{% for r in open_requests %}
+  <div class="request-card">
+    <div class="request-info">
+      <div class="club-badge"><i class="fa-solid fa-globe"></i></div>
+      <div>
+        <h4>Open Request</h4>
+        <div class="meta-row"><span><i class="fa-solid fa-location-dot"></i> {{ r.venue }}</span></div>
+      </div>
+    </div>
+    <div class="request-details">
+      <div><i class="fa-solid fa-calendar-days"></i> {{ r.proposed_date|date:"D, d M" }}</div>
+      <div><i class="fa-solid fa-clock"></i> {{ r.proposed_time|time:"g:i A" }}</div>
+    </div>
+  </div>
+{% empty %}
+  <p class="page-sub">You haven't posted any open requests.</p>
+{% endfor %}
+{% endblock %}

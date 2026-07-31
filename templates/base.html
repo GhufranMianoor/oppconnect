@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}OppConnect{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+<div class="app">
+  {% if request.user.is_authenticated %}
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-badge"><i class="fa-solid fa-futbol"></i></div>
+      <div class="brand-text"><b>OPP</b><b class="accent">CONNECT</b></div>
+    </div>
+    <div class="sidebar-tagline">FIND. PLAY. COMPETE.</div>
+    <ul class="sidebar-nav">
+      <li><a href="{% url 'core:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-house"></i></span> Dashboard</a></li>
+      <li><a href="{% url 'core:find_teams' %}" class="{% if request.resolver_match.url_name == 'find_teams' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-magnifying-glass"></i></span> Find Teams</a></li>
+      <li><a href="{% url 'core:match_requests' %}" class="{% if request.resolver_match.url_name == 'match_requests' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-clipboard-list"></i></span> Match Requests</a></li>
+      <li><a href="{% url 'core:my_team' %}" class="{% if request.resolver_match.url_name == 'my_team' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-users"></i></span> My Team</a></li>
+      <li><a href="{% url 'core:inbox' %}" class="{% if request.resolver_match.url_name == 'inbox' or request.resolver_match.url_name == 'conversation' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-comment-dots"></i></span> Messages</a></li>
+      <li><a href="{% url 'core:notifications' %}" class="{% if request.resolver_match.url_name == 'notifications' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-bell"></i></span> Notifications{% if unread_count %}<span class="badge-count">{{ unread_count }}</span>{% endif %}</a></li>
+      <li><a href="{% url 'accounts:logout' %}"><span class="icon"><i class="fa-solid fa-right-from-bracket"></i></span> Logout</a></li>
+    </ul>
+    <div class="sidebar-promo">
+      <h4>Play More.<br><span>Compete Better.</span></h4>
+      <p>The easiest way to find futsal matches near you.</p>
+      <a href="{% url 'core:find_teams' %}" class="btn btn-primary btn-block">Find Teams</a>
+    </div>
+    {% if my_team %}
+    <div class="sidebar-footer">
+      <div class="team-mini-logo">{{ my_team.name|slice:":2"|upper }}</div>
+      <div>
+        <div>{{ my_team.name }}</div>
+        <div class="role">Captain</div>
+      </div>
+    </div>
+    {% endif %}
+  </aside>
+  {% endif %}
+
+  <main class="main">
+    {% if request.user.is_authenticated %}
+    <div class="topbar">
+      <div class="location"><i class="fa-solid fa-location-dot"></i> {{ my_team.city|default:"Karachi, Pakistan" }}</div>
+      <div class="topbar-right">
+        <a href="{% url 'core:notifications' %}" class="bell"><i class="fa-solid fa-bell"></i>{% if unread_count %}<span class="dot">{{ unread_count }}</span>{% endif %}</a>
+        <div class="user-chip">
+          <div class="avatar">{{ request.user.initials }}</div>
+          {{ request.user.get_full_name|default:request.user.username }}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    <div class="content">
+      {% if messages %}
+        {% for m in messages %}
+          <div class="messages-alert {{ m.tags }}">{{ m }}</div>
+        {% endfor %}
+      {% endif %}
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</div>
+</body>
+</html>

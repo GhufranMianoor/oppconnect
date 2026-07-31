@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="auth-wrap" style="min-height:calc(100vh - 0px);">
+  <div class="auth-card">
+    <div class="auth-logo"><div class="logo-badge"><i class="fa-solid fa-futbol"></i></div></div>
+    <div class="auth-title">Welcome back</div>
+    <div class="auth-sub">Log in to manage your team</div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group"><label>Username</label>{{ form.username }}</div>
+      <div class="form-group"><label>Password</label>{{ form.password }}</div>
+      {% if form.errors %}<ul class="errorlist"><li>Invalid username or password.</li></ul>{% endif %}
+      <button type="submit" class="btn btn-primary btn-block">Log In</button>
+    </form>
+    <div class="auth-switch">Don't have an account? <a href="{% url 'accounts:signup' %}">Sign up</a></div>
+  </div>
+</div>
+{% endblock %}

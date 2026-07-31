@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<h1 class="page-title">Notifications</h1>
+<div class="card">
+  {% for n in notes %}
+    <div class="stat-row" style="padding:12px 0;">
+      <span>{{ n.text }}</span>
+      <span style="color:var(--muted);font-size:12px;">{{ n.created_at|date:"d M, g:i A" }}</span>
+    </div>
+  {% empty %}
+    <p class="page-sub">No notifications yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}
