@@ -32,9 +32,15 @@
           <div><i class="fa-solid fa-clock"></i> {{ r.proposed_time|time:"g:i A" }}</div>
         </div>
         <div class="request-actions">
-          <form method="post" action="{% url 'core:respond_request' r.pk 'accept' %}"><button class="btn btn-primary btn-sm" style="border:1px solid var(--accent);background:#fff;color:var(--accent);" type="submit">Accept</button></form>
-          <form method="post" action="{% url 'core:respond_request' r.pk 'decline' %}"><button class="btn btn-outline btn-sm" type="submit">Decline</button></form>
-        </div>
+          <form method="post" action="{% url 'core:respond_request' r.pk 'accept' %}">
+        {% csrf_token %}
+        <button class="btn btn-primary btn-sm">Accept</button>
+      </form>
+      <form method="post" action="{% url 'core:respond_request' r.pk 'decline' %}">
+        {% csrf_token %}
+        <button class="btn btn-outline btn-sm">Decline</button>
+      </form>
+    </div>
       </div>
     {% empty %}
       <p class="page-sub">No pending match requests right now.</p>
