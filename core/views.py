@@ -46,7 +46,7 @@ def dashboard(request):
 
     nearby_teams = Team.objects.filter(city=team.city).exclude(id=team.id).order_by("-created_at")[:5]
 
-    raw_matches = Match.objects.filter(Q(home_team=team) | Q(away_team=team), status="completed").order_by("-date")[:5]
+    raw_matches = Match.objects.filter(Q(home_team=team) | Q(away_team=team), status="completed").select_related("home_team", "away_team").order_by("-date")[:5]
     recent_matches = [
         {
             "opponent": m.opponent_for(team),
@@ -125,7 +125,7 @@ def team_profile(request, pk):
     my_team = get_my_team(request.user)
     raw_matches = Match.objects.filter(
         Q(home_team=profile_team) | Q(away_team=profile_team), status="completed"
-    ).order_by("-date")[:5]
+    ).select_related("home_team", "away_team").order_by("-date")[:5]
     recent_matches = [
         {
             "opponent": m.opponent_for(profile_team),
@@ -199,8 +199,8 @@ def create_open_request(request):
 def match_requests(request):
     team = get_my_team(request.user)
     incoming = MatchRequest.objects.filter(to_team=team, status="pending").exclude(from_team=team).select_related("from_team").order_by("proposed_date")
-    sent = MatchRequest.objects.filter(from_team=team).exclude(to_team=team).select_related("to_team").order_by("-created_at")
-    open_requests = MatchRequest.objects.filter(from_team=team, to_team__isnull=True).order_by("-created_at")
+    sent = MatchRequest.objects.filter(from_team=team).exclude(to_team=team).exclude(status="pending").select_related("to_team").order_by("-created_at")
+    open_requests = MatchRequest.objects.filter(from_team=team, to_team=team).order_by("-created_at")
     return render(request, "core/match_requests.html", {
         "team": team, "incoming": incoming, "sent": sent, "open_requests": open_requests,
     })

@@ -1,3 +1,5 @@
+from django.utils.functional import cached_property
+
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
@@ -42,69 +44,76 @@ class Team(models.Model):
     def get_absolute_url(self):
         return reverse("core:team_profile", args=[self.pk])
 
-    @property
-    def matches_played(self):
-        return self.home_matches.filter(status="completed").count() + self.away_matches.filter(status="completed").count()
-
-    @property
-    def wins(self):
-        return sum(1 for m in self._completed_matches() if m.winner_id == self.id)
-
-    @property
-    def losses(self):
-        return sum(1 for m in self._completed_matches() if m.winner_id is not None and m.winner_id != self.id)
-
-    @property
-    def draws(self):
-        return sum(1 for m in self._completed_matches() if m.winner_id is None)
-
+    @cached_property
     def _completed_matches(self):
+        """
+        Fetch every completed match for this team ONE time (one query,
+        select_related to avoid extra FK lookups for home_team/away_team),
+        cached on the instance so repeated property access below - and
+        repeated template access to team.wins, team.losses, etc - doesn't
+        re-hit the database each time.
+        """
         from itertools import chain
-        return list(chain(self.home_matches.filter(status="completed"), self.away_matches.filter(status="completed")))
+        qs_kwargs = dict(status="completed")
+        home = self.home_matches.filter(**qs_kwargs).select_related("home_team", "away_team")
+        away = self.away_matches.filter(**qs_kwargs).select_related("home_team", "away_team")
+        return list(chain(home, away))
 
-    @property
+    @cached_property
+    def matches_played(self):
+        return len(self._completed_matches)
+
+    @cached_property
+    def wins(self):
+        return sum(1 for m in self._completed_matches if m.winner_id == self.id)
+
+    @cached_property
+    def losses(self):
+        return sum(1 for m in self._completed_matches if m.winner_id is not None and m.winner_id != self.id)
+
+    @cached_property
+    def draws(self):
+        return sum(1 for m in self._completed_matches if m.winner_id is None)
+
+    @cached_property
     def win_rate(self):
         played = self.matches_played
         return round((self.wins / played) * 100) if played else 0
 
-    @property
+    @cached_property
     def goals_scored(self):
         total = 0
-        for m in self.home_matches.filter(status="completed"):
-            total += m.home_score or 0
-        for m in self.away_matches.filter(status="completed"):
-            total += m.away_score or 0
+        for m in self._completed_matches:
+            total += (m.home_score if m.home_team_id == self.id else m.away_score) or 0
         return total
 
-    @property
+    @cached_property
     def goals_conceded(self):
         total = 0
-        for m in self.home_matches.filter(status="completed"):
-            total += m.away_score or 0
-        for m in self.away_matches.filter(status="completed"):
-            total += m.home_score or 0
+        for m in self._completed_matches:
+            total += (m.away_score if m.home_team_id == self.id else m.home_score) or 0
         return total
 
-    @property
+    @cached_property
     def clean_sheets(self):
         count = 0
-        for m in self.home_matches.filter(status="completed"):
-            if (m.away_score or 0) == 0:
-                count += 1
-        for m in self.away_matches.filter(status="completed"):
-            if (m.home_score or 0) == 0:
+        for m in self._completed_matches:
+            conceded = m.away_score if m.home_team_id == self.id else m.home_score
+            if (conceded or 0) == 0:
                 count += 1
         return count
 
-    @property
+    @cached_property
     def reliability(self):
         """% of accepted match requests that were completed (not cancelled)."""
-        accepted = MatchRequest.objects.filter(
+        counts = MatchRequest.objects.filter(
             models.Q(from_team=self) | models.Q(to_team=self), status__in=["accepted", "completed"]
-        ).count()
-        completed = MatchRequest.objects.filter(
-            models.Q(from_team=self) | models.Q(to_team=self), status="completed"
-        ).count()
+        ).aggregate(
+            accepted=models.Count("id"),
+            completed=models.Count("id", filter=models.Q(status="completed")),
+        )
+        accepted = counts["accepted"]
+        completed = counts["completed"]
         if accepted == 0:
             return 100
         return round((completed / accepted) * 100)
