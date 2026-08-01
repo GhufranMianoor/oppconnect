@@ -156,6 +156,21 @@ LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'core:dashboard'
 LOGOUT_REDIRECT_URL = 'accounts:login'
 
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'no-reply@oppconnect.local')
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    email_host = os.environ.get('EMAIL_HOST', '')
+    if email_host:
+        EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+        EMAIL_HOST = email_host
+        EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+        EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+        EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+        EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+    else:
+        EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
