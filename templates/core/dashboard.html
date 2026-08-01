@@ -148,7 +148,7 @@
     </div>
 
     <div class="card">
-      <div class="section-head" style="margin-bottom:10px;"><h3 style="font-size:15.5px;">Recent Matches</h3><a href="{% url 'core:my_team' %}">View All</a></div>
+      <div class="section-head" style="margin-bottom:10px;"><h3 style="font-size:15.5px;">Recent Matches</h3><a href="{% url 'core:matches' %}">View All</a></div>
       {% for m in recent_matches %}
         <div class="match-row">
           <div class="result-chip {% if m.result == 'W' %}badge-win{% elif m.result == 'D' %}badge-draw{% else %}badge-loss{% endif %}">

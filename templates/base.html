@@ -26,6 +26,7 @@
     <div class="sidebar-tagline">FIND. PLAY. COMPETE.</div>
     <ul class="sidebar-nav">
       <li><a href="{% url 'core:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-house"></i></span> Dashboard</a></li>
+      <li><a href="{% url 'core:matches' %}" class="{% if request.resolver_match.url_name == 'matches' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-futbol"></i></span> Matches</a></li>
       <li><a href="{% url 'core:find_teams' %}" class="{% if request.resolver_match.url_name == 'find_teams' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-magnifying-glass"></i></span> Find Teams</a></li>
       <li><a href="{% url 'core:match_requests' %}" class="{% if request.resolver_match.url_name == 'match_requests' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-clipboard-list"></i></span> Match Requests</a></li>
       <li><a href="{% url 'core:my_team' %}" class="{% if request.resolver_match.url_name == 'my_team' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-users"></i></span> My Team</a></li>
