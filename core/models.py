@@ -7,9 +7,11 @@ from django.urls import reverse
 User = settings.AUTH_USER_MODEL
 
 LEVEL_CHOICES = [
-    ("casual", "Casual"),
-    ("intermediate", "Intermediate"),
-    ("competitive", "Competitive"),
+    ("below average", "Below Average"),
+    ("average", "Average"),
+    ("good", "Good"),
+    ("very good", "Very Good"),
+    ("strong", "Strong")
 ]
 
 PLAYSTYLE_CHOICES = [
@@ -34,7 +36,7 @@ class Team(models.Model):
     bio = models.TextField(blank=True)
     home_ground = models.CharField(max_length=150, blank=True)
     city = models.CharField(max_length=100, default="Karachi")
-    level = models.CharField(max_length=20, choices=LEVEL_CHOICES, default="casual")
+    level = models.CharField(max_length=20, choices=LEVEL_CHOICES, default="below average")
     playstyle = models.CharField(max_length=20, choices=PLAYSTYLE_CHOICES, default="balanced")
     created_at = models.DateTimeField(auto_now_add=True)
 
