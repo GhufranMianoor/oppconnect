@@ -20,7 +20,7 @@
 
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <div class="logo-badge"><i class="fa-solid fa-futbol"></i></div>
+      <div class="logo-badge"><img src="{% static 'img/oppconnect_logo.png' %}" alt="OppConnect logo"></div>
       <div class="brand-text"><b>OPP</b><b class="accent">CONNECT</b></div>
     </div>
     <div class="sidebar-tagline">FIND. PLAY. COMPETE.</div>
@@ -42,7 +42,13 @@
     </div>
     {% if my_team %}
     <div class="sidebar-footer">
-      <div class="team-mini-logo">{{ my_team.name|slice:":2"|upper }}</div>
+      <div class="team-mini-logo">
+        {% if my_team.logo %}
+          <img src="{{ my_team.logo.url }}" alt="{{ my_team.name }} logo">
+        {% else %}
+          {{ my_team.name|slice:":2"|upper }}
+        {% endif %}
+      </div>
       <div>
         <div>{{ my_team.name }}</div>
         <div class="role">Captain</div>

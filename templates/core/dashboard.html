@@ -18,7 +18,13 @@
     {% for r in pending_requests %}
       <div class="request-card">
         <div class="request-info">
-          <div class="club-badge">{{ r.from_team.name|slice:":2"|upper }}</div>
+          <div class="club-badge">
+            {% if r.from_team.logo %}
+              <img src="{{ r.from_team.logo.url }}" alt="{{ r.from_team.name }} logo">
+            {% else %}
+              {{ r.from_team.name|slice:":2"|upper }}
+            {% endif %}
+          </div>
           <div>
             <h4>{{ r.from_team.name }}</h4>
             <div class="meta-row">
@@ -50,7 +56,13 @@
     {% for t in nearby_teams %}
       <div class="team-list-card">
         <div class="team-list-left">
-          <div class="club-badge">{{ t.name|slice:":2"|upper }}</div>
+          <div class="club-badge">
+            {% if t.logo %}
+              <img src="{{ t.logo.url }}" alt="{{ t.name }} logo">
+            {% else %}
+              {{ t.name|slice:":2"|upper }}
+            {% endif %}
+          </div>
           <div>
             <h4 style="margin:0 0 3px;font-size:14.5px;">{{ t.name }}</h4>
             <div class="meta-row"><span><i class="fa-solid fa-signal"></i> {{ t.get_level_display }}</span></div>

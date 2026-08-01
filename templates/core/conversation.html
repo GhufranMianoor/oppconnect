@@ -6,7 +6,13 @@
   <div class="convo-list">
     {% for c in conversations %}
       <a href="{% url 'core:conversation' c.pk %}" class="convo-item {% if c.pk == convo.pk %}active{% endif %}">
-        <div class="club-badge" style="width:38px;height:38px;font-size:12px;">{{ c.other.name|slice:":2"|upper }}</div>
+        <div class="club-badge" style="width:38px;height:38px;font-size:12px;">
+          {% if c.other.logo %}
+            <img src="{{ c.other.logo.url }}" alt="{{ c.other.name }} logo">
+          {% else %}
+            {{ c.other.name|slice:":2"|upper }}
+          {% endif %}
+        </div>
         <div>
           <div class="name">{{ c.other.name }}</div>
         </div>
@@ -15,7 +21,13 @@
   </div>
   <div class="chat-pane">
     <div class="chat-header">
-      <div class="club-badge" style="width:34px;height:34px;font-size:11px;">{{ other.name|slice:":2"|upper }}</div>
+      <div class="club-badge" style="width:34px;height:34px;font-size:11px;">
+        {% if other.logo %}
+          <img src="{{ other.logo.url }}" alt="{{ other.name }} logo">
+        {% else %}
+          {{ other.name|slice:":2"|upper }}
+        {% endif %}
+      </div>
       {{ other.name }}
     </div>
     <div class="chat-body">

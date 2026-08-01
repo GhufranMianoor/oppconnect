@@ -2,7 +2,13 @@
 {% block title %}{{ profile_team.name }}{% endblock %}
 {% block content %}
 <div class="profile-header">
-  <div class="club-badge">{{ profile_team.name|slice:":2"|upper }}</div>
+  <div class="club-badge">
+    {% if profile_team.logo %}
+      <img src="{{ profile_team.logo.url }}" alt="{{ profile_team.name }} logo">
+    {% else %}
+      {{ profile_team.name|slice:":2"|upper }}
+    {% endif %}
+  </div>
   <div style="flex:1;">
     <h1 class="page-title" style="margin-bottom:6px;">{{ profile_team.name }}</h1>
     <div class="meta-row">

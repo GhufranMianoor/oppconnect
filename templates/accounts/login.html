@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Login{% endblock %}
 {% block content %}
 <div class="auth-wrap" style="min-height:calc(100vh - 0px);">
   <div class="auth-card">
-    <div class="auth-logo"><div class="logo-badge"><i class="fa-solid fa-futbol"></i></div></div>
+    <div class="auth-logo"><div class="logo-badge"><img src="{% static 'img/oppconnect_logo.png' %}" alt="OppConnect logo"></div></div>
     <div class="auth-title">Welcome back</div>
     <div class="auth-sub">Log in to manage your team</div>
     <form method="post">

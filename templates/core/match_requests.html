@@ -7,7 +7,13 @@
 {% for r in incoming %}
   <div class="request-card">
     <div class="request-info">
-      <div class="club-badge">{{ r.from_team.name|slice:":2"|upper }}</div>
+      <div class="club-badge">
+        {% if r.from_team.logo %}
+          <img src="{{ r.from_team.logo.url }}" alt="{{ r.from_team.name }} logo">
+        {% else %}
+          {{ r.from_team.name|slice:":2"|upper }}
+        {% endif %}
+      </div>
       <div>
         <h4>{{ r.from_team.name }}</h4>
         <div class="meta-row"><span><i class="fa-solid fa-location-dot"></i> {{ r.venue }}</span></div>
@@ -35,7 +41,13 @@
 {% for r in sent %}
   <div class="request-card">
     <div class="request-info">
-      <div class="club-badge">{{ r.to_team.name|slice:":2"|upper }}</div>
+      <div class="club-badge">
+        {% if r.to_team.logo %}
+          <img src="{{ r.to_team.logo.url }}" alt="{{ r.to_team.name }} logo">
+        {% else %}
+          {{ r.to_team.name|slice:":2"|upper }}
+        {% endif %}
+      </div>
       <div>
         <h4>{{ r.to_team.name }}</h4>
         <div class="meta-row"><span><i class="fa-solid fa-location-dot"></i> {{ r.venue }}</span></div>

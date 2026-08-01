@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Sign Up{% endblock %}
 {% block content %}
 <div class="auth-wrap">
   <div class="auth-card">
-    <div class="auth-logo"><div class="logo-badge"><i class="fa-solid fa-futbol"></i></div></div>
+    <div class="auth-logo"><div class="logo-badge"><img src="{% static 'img/oppconnect_logo.png' %}" alt="OppConnect logo"></div></div>
     <div class="auth-title">Create your account</div>
     <div class="auth-sub">Join OppConnect and build your team</div>
     <form method="post">

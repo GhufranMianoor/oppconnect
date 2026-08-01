@@ -7,7 +7,13 @@
   <div class="convo-list">
     {% for c in convo_list %}
       <a href="{% url 'core:conversation' c.conversation.pk %}" class="convo-item">
-        <div class="club-badge" style="width:38px;height:38px;font-size:12px;">{{ c.other.name|slice:":2"|upper }}</div>
+        <div class="club-badge" style="width:38px;height:38px;font-size:12px;">
+          {% if c.other.logo %}
+            <img src="{{ c.other.logo.url }}" alt="{{ c.other.name }} logo">
+          {% else %}
+            {{ c.other.name|slice:":2"|upper }}
+          {% endif %}
+        </div>
         <div>
           <div class="name">{{ c.other.name }}</div>
           <div class="snippet">{% if c.last %}{{ c.last.text }}{% else %}Say hello 👋{% endif %}</div>
