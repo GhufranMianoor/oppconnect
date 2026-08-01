@@ -11,6 +11,7 @@ urlpatterns = [
     path("teams/<int:pk>/", views.team_profile, name="team_profile"),
     path("teams/<int:pk>/request/", views.send_match_request, name="send_match_request"),
     path("teams/<int:pk>/join/", views.send_join_request, name="send_join_request"),
+    path("teams/<int:team_pk>/players/<int:player_pk>/invite/", views.invite_player, name="invite_player"),
     path("teams/<int:pk>/message/", views.start_conversation, name="start_conversation"),
     path("my-team/", views.my_team, name="my_team"),
     path("requests/", views.match_requests, name="match_requests"),

@@ -1,6 +1,7 @@
 import calendar as cal
 
 from django.contrib import messages as flash
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -12,6 +13,8 @@ from .forms import (AvailabilityForm, MatchRequestForm, MessageForm,
 from .models import (Availability, Conversation, Match, MatchGoal,
                       MatchRequest, Notification, PlayerRating, Team,
                       TeamJoinRequest, TeamMembership)
+
+User = get_user_model()
 
 
 def get_my_team(user):
@@ -131,6 +134,7 @@ def find_teams(request):
 def team_profile(request, pk):
     profile_team = get_object_or_404(Team, pk=pk)
     my_team = get_my_team(request.user)
+    my_membership = get_my_membership(request.user, my_team)
     raw_matches = Match.objects.filter(
         Q(home_team=profile_team) | Q(away_team=profile_team), status="completed"
     ).select_related("home_team", "away_team").order_by("-date")[:5]
@@ -145,6 +149,10 @@ def team_profile(request, pk):
         for m in raw_matches
     ]
     roster = TeamMembership.objects.filter(team=profile_team).select_related("user").order_by("role", "user__first_name")
+    available_players = []
+    is_captain = bool(my_membership and my_membership.role == "captain" and my_team and my_team.id == profile_team.id)
+    if is_captain:
+        available_players = User.objects.filter(team_memberships__isnull=True).exclude(pk=request.user.pk).order_by("first_name", "username")[:20]
 
     has_pending_request = False
     if not my_team:
@@ -157,6 +165,8 @@ def team_profile(request, pk):
         "is_own": my_team and my_team.id == profile_team.id,
         "roster": roster,
         "has_pending_request": has_pending_request,
+        "is_captain": is_captain,
+        "available_players": available_players,
     })
 
 
@@ -333,6 +343,7 @@ def send_join_request(request, pk):
             jr = form.save(commit=False)
             jr.player = request.user
             jr.team = team
+            jr.initiated_by_team = False
             jr.save()
             Notification.objects.create(
                 team=team,
@@ -347,13 +358,46 @@ def send_join_request(request, pk):
 
 
 @login_required
+def invite_player(request, team_pk, player_pk):
+    team = get_object_or_404(Team, pk=team_pk)
+    player = get_object_or_404(User, pk=player_pk)
+    membership = get_my_membership(request.user, team)
+    if not membership or membership.role != "captain":
+        flash.error(request, "Only the captain can invite players.")
+        return redirect("core:team_profile", pk=team.pk)
+
+    if TeamMembership.objects.filter(user=player).exists():
+        flash.error(request, f"{player} is already on a team.")
+        return redirect("core:team_profile", pk=team.pk)
+
+    if TeamJoinRequest.objects.filter(player=player, team=team, status="pending", initiated_by_team=True).exists():
+        flash.info(request, f"An invite is already pending for {player}.")
+        return redirect("core:team_profile", pk=team.pk)
+
+    TeamJoinRequest.objects.create(
+        player=player,
+        team=team,
+        message="",
+        initiated_by_team=True,
+        status="pending",
+    )
+    Notification.objects.create(
+        user=player,
+        text=f"{team.name} invited you to join their team.",
+        link=team.get_absolute_url(),
+    )
+    flash.success(request, f"Invite sent to {player}.")
+    return redirect("core:team_profile", pk=team.pk)
+
+
+@login_required
 def team_join_requests(request):
     team = get_my_team(request.user)
     if not team:
         return redirect("core:onboard_team")
     membership = get_my_membership(request.user, team)
     is_captain = bool(membership and membership.role == "captain")
-    incoming = team.join_requests.filter(status="pending").select_related("player") if is_captain else []
+    incoming = team.join_requests.filter(status="pending", initiated_by_team=False).select_related("player") if is_captain else []
     history = team.join_requests.exclude(status="pending").select_related("player")[:10] if is_captain else []
     return render(request, "core/join_requests.html", {
         "team": team, "incoming": incoming, "history": history, "is_captain": is_captain,

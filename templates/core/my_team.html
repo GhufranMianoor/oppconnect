@@ -31,6 +31,11 @@
       <div class="stat-row"><span>Reliability</span><strong>{{ team.reliability }}%</strong></div>
     </div>
     <a href="{% url 'core:team_profile' team.pk %}" class="btn btn-outline btn-block" style="margin-top:14px;">View Public Profile</a>
+    {% if is_captain %}
+      <a href="{% url 'core:team_join_requests' %}" class="btn btn-block" style="margin-top:10px;">
+        <i class="fa-solid fa-user-plus"></i> Join Requests{% if pending_join_requests %} <span class="badge-count" style="position:static;margin-left:4px;">{{ pending_join_requests }}</span>{% endif %}
+      </a>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

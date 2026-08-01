@@ -274,6 +274,7 @@ class TeamJoinRequest(models.Model):
     player = models.ForeignKey(User, on_delete=models.CASCADE, related_name="join_requests")
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="join_requests")
     message = models.TextField(blank=True)
+    initiated_by_team = models.BooleanField(default=False)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)
 

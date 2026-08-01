@@ -22,6 +22,14 @@
     <a href="{% url 'core:start_conversation' profile_team.pk %}" class="btn btn-outline"><i class="fa-solid fa-comment-dots"></i> Message</a>
     <a href="{% url 'core:send_match_request' profile_team.pk %}" class="btn btn-primary">Send Match Request</a>
   </div>
+  {% elif not team %}
+  <div style="display:flex;gap:10px;">
+    {% if has_pending_request %}
+      <span class="badge badge-casual">Join Request Pending</span>
+    {% else %}
+      <a href="{% url 'core:send_join_request' profile_team.pk %}" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> Request to Join</a>
+    {% endif %}
+  </div>
   {% endif %}
 </div>
 
@@ -30,6 +38,57 @@
     <div class="card" style="margin-bottom:18px;">
       <h3 style="margin-top:0;">About</h3>
       <p class="page-sub" style="margin:0;">{{ profile_team.bio|default:"This team hasn't added a bio yet." }}</p>
+    </div>
+    <div class="card" style="margin-bottom:18px;">
+      <div class="tabs">
+        <input type="radio" id="tab-1" name="teamtabs" checked>
+        <input type="radio" id="tab-2" name="teamtabs">
+        <div class="tab-bar">
+          <label for="tab-1"><i class="fa-solid fa-shield-halved"></i> Squad</label>
+          {% if is_captain %}<label for="tab-2"><i class="fa-solid fa-user-plus"></i> Players</label>{% endif %}
+        </div>
+        <div class="tab-content">
+          <div class="tab-panel panel-1">
+            {% for m in roster %}
+              <a href="{% url 'accounts:player_profile' m.user.pk %}" class="roster-row" style="text-decoration:none;color:inherit;">
+                <div class="roster-left">
+                  <div class="player-avatar">{% if m.user.avatar %}<img src="{{ m.user.avatar.url }}" alt="">{% else %}{{ m.user.initials }}{% endif %}</div>
+                  <div>
+                    <div class="player-name">{{ m.user.get_full_name|default:m.user.username }}{% if m.role == 'captain' %} <i class="fa-solid fa-star" style="color:var(--amber);font-size:11px;" title="Captain"></i>{% endif %}</div>
+                    <div class="player-meta">{{ m.user.get_position_display|default:"Player" }}{% if m.position %} &middot; {{ m.position }}{% endif %}</div>
+                  </div>
+                </div>
+              </a>
+            {% empty %}
+              <p class="page-sub" style="margin:0;">No players yet.</p>
+            {% endfor %}
+          </div>
+          {% if is_captain %}
+          <div class="tab-panel panel-2">
+            {% for player in available_players %}
+              <div class="team-list-card">
+                <div class="team-list-left">
+                  <div class="player-avatar">{{ player.initials }}</div>
+                  <div>
+                    <h4 style="margin:0 0 3px;font-size:14.5px;">{{ player.get_full_name|default:player.username }}</h4>
+                    <div class="meta-row">
+                      {% if player.position %}<span>{{ player.get_position_display }}</span>{% endif %}
+                      <span><i class="fa-solid fa-location-dot"></i> {{ player.city|default:"Karachi" }}</span>
+                    </div>
+                  </div>
+                </div>
+                <form method="post" action="{% url 'core:invite_player' profile_team.pk player.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-primary btn-sm">Invite</button>
+                </form>
+              </div>
+            {% empty %}
+              <p class="page-sub" style="margin:0;">No free agents available right now.</p>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
     </div>
     <div class="card">
       <h3 style="margin-top:0;">Recent Matches</h3>
@@ -57,6 +116,7 @@
         <div class="stat-row"><span>Reliability</span><strong>{{ profile_team.reliability }}%</strong></div>
       </div>
     </div>
+
   </div>
 </div>
 {% endblock %}

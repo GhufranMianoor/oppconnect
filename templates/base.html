@@ -67,10 +67,10 @@
       </div>
       <div class="topbar-right">
         <a href="{% url 'core:notifications' %}" class="bell"><i class="fa-solid fa-bell"></i>{% if unread_count %}<span class="dot">{{ unread_count }}</span>{% endif %}</a>
-        <div class="user-chip">
+        <a href="{% url 'accounts:player_profile' request.user.pk %}" class="user-chip">
           <div class="avatar">{{ request.user.initials }}</div>
           {{ request.user.get_full_name|default:request.user.username }}
-        </div>
+        </a>
       </div>
     </div>
     {% endif %}

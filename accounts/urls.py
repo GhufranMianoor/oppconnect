@@ -38,4 +38,5 @@ urlpatterns = [
     path("signup/", views.signup, name="signup"),
     path("profile/edit/", views.edit_profile, name="edit_profile"),
     path("profile/<int:pk>/", views.player_profile, name="player_profile"),
+    path("profile/invites/<int:pk>/<str:action>/", views.respond_team_invite, name="respond_team_invite"),
 ]

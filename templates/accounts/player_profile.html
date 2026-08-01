@@ -23,6 +23,32 @@
       <h3 style="margin-top:0;">About</h3>
       <p class="page-sub" style="margin:0;">{{ player.bio|default:"This player hasn't added a bio yet." }}</p>
     </div>
+    {% if is_own and pending_invitations %}
+      <div class="card">
+        <h3 style="margin-top:0;">Team Invites</h3>
+        {% for invite in pending_invitations %}
+          <div class="request-card">
+            <div class="request-info">
+              <div class="club-badge">{{ invite.team.name|slice:":2"|upper }}</div>
+              <div>
+                <h4 style="margin:0 0 3px;">{{ invite.team.name }}</h4>
+                <div class="meta-row"><span><i class="fa-solid fa-location-dot"></i> {{ invite.team.city }}</span></div>
+              </div>
+            </div>
+            <div class="request-actions">
+              <form method="post" action="{% url 'accounts:respond_team_invite' invite.pk 'accept' %}">
+                {% csrf_token %}
+                <button class="btn btn-primary btn-sm">Accept</button>
+              </form>
+              <form method="post" action="{% url 'accounts:respond_team_invite' invite.pk 'decline' %}">
+                {% csrf_token %}
+                <button class="btn btn-outline btn-sm">Decline</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
   </div>
   <div>
     <div class="card">
