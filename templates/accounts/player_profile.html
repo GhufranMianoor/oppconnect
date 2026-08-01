@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ player.get_full_name|default:player.username }}{% endblock %}
+{% block content %}
+<div class="profile-header">
+  <div class="player-avatar" style="width:64px;height:64px;font-size:20px;">
+    {% if player.avatar %}<img src="{{ player.avatar.url }}" alt="">{% else %}{{ player.initials }}{% endif %}
+  </div>
+  <div style="flex:1;">
+    <h1 class="page-title" style="margin-bottom:6px;">{{ player.get_full_name|default:player.username }}</h1>
+    <div class="meta-row">
+      {% if player.position %}<span class="badge badge-casual">{{ player.get_position_display }}</span>{% endif %}
+      <span><i class="fa-solid fa-location-dot"></i> {{ player.city }}</span>
+    </div>
+  </div>
+  {% if is_own %}
+    <a href="{% url 'accounts:edit_profile' %}" class="btn btn-outline"><i class="fa-solid fa-pen"></i> Edit Profile</a>
+  {% endif %}
+</div>
+
+<div class="two-col">
+  <div>
+    <div class="card" style="margin-bottom:18px;">
+      <h3 style="margin-top:0;">About</h3>
+      <p class="page-sub" style="margin:0;">{{ player.bio|default:"This player hasn't added a bio yet." }}</p>
+    </div>
+  </div>
+  <div>
+    <div class="card">
+      <h3 style="margin-top:0;font-size:15.5px;">Team</h3>
+      {% if membership %}
+        <a href="{% url 'core:team_profile' membership.team.pk %}" class="team-list-card" style="text-decoration:none;color:inherit;">
+          <div class="team-list-left">
+            <div class="club-badge">{{ membership.team.name|slice:":2"|upper }}</div>
+            <div>
+              <h4 style="margin:0 0 3px;font-size:14.5px;">{{ membership.team.name }}</h4>
+              <div class="meta-row"><span>{{ membership.get_role_display }}</span></div>
+            </div>
+          </div>
+        </a>
+      {% else %}
+        <p class="page-sub" style="margin:0;">Not on a team yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,8 +1,9 @@
-from django.utils.functional import cached_property
-
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
+from django.utils.functional import cached_property
+
+from .fields import EncryptedTextField
 
 User = settings.AUTH_USER_MODEL
 
@@ -237,7 +238,7 @@ class Conversation(models.Model):
 class Message(models.Model):
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name="messages")
     sender = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="sent_messages")
-    text = models.TextField()
+    text = EncryptedTextField()  # encrypted at rest, decrypted transparently on read
     sent_at = models.DateTimeField(auto_now_add=True)
     read = models.BooleanField(default=False)
 
@@ -249,7 +250,11 @@ class Message(models.Model):
 
 
 class Notification(models.Model):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="notifications")
+    # A notification targets a team (visible to all its members) and/or a
+    # specific user (e.g. a player who isn't on a team yet, so has no team
+    # inbox to land in - like someone whose join request just got a reply).
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="notifications", null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications", null=True, blank=True)
     text = models.CharField(max_length=255)
     link = models.CharField(max_length=255, blank=True)
     is_read = models.BooleanField(default=False)
@@ -257,3 +262,52 @@ class Notification(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+class TeamJoinRequest(models.Model):
+    """A player asking to join an existing team's roster."""
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("accepted", "Accepted"),
+        ("declined", "Declined"),
+    ]
+    player = models.ForeignKey(User, on_delete=models.CASCADE, related_name="join_requests")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="join_requests")
+    message = models.TextField(blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.player} -> {self.team} ({self.status})"
+
+
+class MatchGoal(models.Model):
+    """A scorer entry for a completed match - who scored, for which side, how many."""
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name="goals")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="match_goals")
+    scorer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="goals_scored")
+    goals = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        unique_together = ("match", "scorer")
+        ordering = ["-goals"]
+
+    def __str__(self):
+        return f"{self.scorer} - {self.goals} goal(s) ({self.match})"
+
+
+class PlayerRating(models.Model):
+    """A 1-10 performance rating for a player in a specific completed match."""
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name="ratings")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="match_ratings")
+    player = models.ForeignKey(User, on_delete=models.CASCADE, related_name="match_ratings")
+    rating = models.PositiveSmallIntegerField(default=6)
+
+    class Meta:
+        unique_together = ("match", "player")
+
+    def __str__(self):
+        return f"{self.player} rated {self.rating}/10 ({self.match})"

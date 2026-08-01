@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Edit Profile{% endblock %}
+{% block content %}
+<h1 class="page-title">Edit Profile</h1>
+<p class="page-sub">Update how other players and captains see you.</p>
+<div class="card form-card">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="form-row">
+      <div class="form-group"><label>First Name</label>{{ form.first_name }}</div>
+      <div class="form-group"><label>Last Name</label>{{ form.last_name }}</div>
+    </div>
+    <div class="form-group"><label>Avatar</label>{{ form.avatar }}</div>
+    <div class="form-row">
+      <div class="form-group"><label>Position</label>{{ form.position }}</div>
+      <div class="form-group"><label>City</label>{{ form.city }}</div>
+    </div>
+    <div class="form-group"><label>Phone</label>{{ form.phone }}</div>
+    <div class="form-group"><label>Bio</label>{{ form.bio }}</div>
+    <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
+  </form>
+</div>
+{% endblock %}

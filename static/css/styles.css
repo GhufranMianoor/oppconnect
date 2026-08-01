@@ -409,3 +409,42 @@ img{max-width:100%;}
   .stat-value{font-size:20px;}
   .club-badge{width:38px;height:38px;font-size:11px;}
 }
+
+/* ---- Tabs (radio-driven, no JS) ---- */
+.tabs{margin-top:18px;}
+.tabs input[type="radio"]{display:none;}
+.tab-bar{display:flex;gap:6px;border-bottom:1px solid var(--border);margin-bottom:18px;flex-wrap:wrap;}
+.tab-bar label{padding:10px 16px;cursor:pointer;font-weight:600;font-size:13.5px;color:var(--muted);border-bottom:2px solid transparent;}
+.tab-panel{display:none;}
+#tab-1:checked ~ .tab-bar label[for="tab-1"],
+#tab-2:checked ~ .tab-bar label[for="tab-2"],
+#tab-3:checked ~ .tab-bar label[for="tab-3"]{color:var(--accent);border-bottom-color:var(--accent);}
+#tab-1:checked ~ .tab-content .tab-panel.panel-1,
+#tab-2:checked ~ .tab-content .tab-panel.panel-2,
+#tab-3:checked ~ .tab-content .tab-panel.panel-3{display:block;}
+
+/* ---- Roster / player list ---- */
+.roster-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.roster-row:last-child{border-bottom:none;}
+.roster-left{display:flex;align-items:center;gap:12px;}
+.player-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent-light);color:var(--accent-dark);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;overflow:hidden;}
+.player-avatar img{width:100%;height:100%;object-fit:cover;}
+.player-name{font-weight:600;font-size:13.5px;}
+.player-meta{font-size:12px;color:var(--muted);}
+
+/* ---- Result entry grid ---- */
+.result-score-row{display:flex;align-items:center;justify-content:center;gap:16px;margin:18px 0 28px;}
+.result-score-row input[type="number"]{width:70px;text-align:center;font-size:24px;font-weight:800;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:"Manrope",sans-serif;}
+.result-score-row .vs{font-weight:700;color:var(--muted);}
+.result-team-label{text-align:center;font-weight:700;font-size:13.5px;}
+
+.stat-input-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+.stat-input-row:last-child{border-bottom:none;}
+.stat-input-row input[type="number"]{width:56px;padding:6px;border:1px solid var(--border);border-radius:6px;text-align:center;}
+.stat-input-row select{padding:6px;border:1px solid var(--border);border-radius:6px;}
+
+.rating-pill{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:22px;padding:0 6px;border-radius:20px;font-size:11.5px;font-weight:700;background:var(--accent-light);color:var(--accent-dark);}
+.scorer-line{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13.5px;}
+.scorer-line:last-child{border-bottom:none;}
+
+.encrypted-hint{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);justify-content:center;padding:6px 0;}

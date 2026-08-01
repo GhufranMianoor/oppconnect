@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load core_extras %}
+{% block title %}{{ match.home_team.name }} vs {{ match.away_team.name }}{% endblock %}
+{% block content %}
+<div class="profile-header">
+  <div class="club-badge">{{ match.home_team.name|slice:":2"|upper }}</div>
+  <div style="flex:1;">
+    <h1 class="page-title" style="margin-bottom:6px;">{{ match.home_team.name }} vs {{ match.away_team.name }}</h1>
+    <div class="meta-row">
+      <span><i class="fa-solid fa-calendar-days"></i> {{ match.date|date:"D, d M Y" }}</span>
+      <span><i class="fa-solid fa-clock"></i> {{ match.time|time:"g:i A" }}</span>
+      <span><i class="fa-solid fa-location-dot"></i> {{ match.venue }}</span>
+      <span class="badge {% if match.status == 'completed' %}badge-win{% elif match.status == 'cancelled' %}badge-loss{% else %}badge-casual{% endif %}">{{ match.get_status_display }}</span>
+    </div>
+  </div>
+  {% if match.status == 'completed' %}
+    <div style="font-family:'Manrope',sans-serif;font-weight:800;font-size:28px;">{{ match.home_score }} - {{ match.away_score }}</div>
+  {% endif %}
+</div>
+
+{% if is_captain %}
+  <p class="page-sub">Enter the final score, who scored, and rate each player once the match has ended. You can update these any time.</p>
+  <form method="post" action="{% url 'core:submit_match_result' match.pk %}">
+    {% csrf_token %}
+    <div class="tabs">
+      <input type="radio" id="tab-1" name="matchtabs" checked>
+      <input type="radio" id="tab-2" name="matchtabs">
+      <input type="radio" id="tab-3" name="matchtabs">
+      <div class="tab-bar">
+        <label for="tab-1"><i class="fa-solid fa-futbol"></i> Score</label>
+        <label for="tab-2"><i class="fa-solid fa-bullseye"></i> Scorers</label>
+        <label for="tab-3"><i class="fa-solid fa-star"></i> Ratings</label>
+      </div>
+      <div class="tab-content">
+
+        <div class="tab-panel panel-1 card">
+          <div class="result-score-row">
+            <div>
+              <div class="result-team-label">{{ match.home_team.name }}</div>
+              <input type="number" min="0" name="home_score" value="{{ match.home_score|default_if_none:'' }}" required>
+            </div>
+            <span class="vs">VS</span>
+            <div>
+              <div class="result-team-label">{{ match.away_team.name }}</div>
+              <input type="number" min="0" name="away_score" value="{{ match.away_score|default_if_none:'' }}" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel panel-2 card">
+          <h3 style="margin-top:0;font-size:15.5px;">{{ match.home_team.name }}</h3>
+          {% for m in home_roster %}
+            <div class="stat-input-row">
+              <span>{{ m.user.get_full_name|default:m.user.username }}</span>
+              <input type="number" min="0" name="goals_{{ m.user.id }}" value="{{ goals_map|get_item:m.user.id|default:'' }}" placeholder="0">
+            </div>
+          {% endfor %}
+          <h3 style="font-size:15.5px;margin:16px 0 0;">{{ match.away_team.name }}</h3>
+          {% for m in away_roster %}
+            <div class="stat-input-row">
+              <span>{{ m.user.get_full_name|default:m.user.username }}</span>
+              <input type="number" min="0" name="goals_{{ m.user.id }}" value="{{ goals_map|get_item:m.user.id|default:'' }}" placeholder="0">
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="tab-panel panel-3 card">
+          <h3 style="margin-top:0;font-size:15.5px;">{{ match.home_team.name }}</h3>
+          {% for m in home_roster %}
+            <div class="stat-input-row">
+              <span>{{ m.user.get_full_name|default:m.user.username }}</span>
+              <select name="rating_{{ m.user.id }}">
+                <option value="">-</option>
+                {% for r in rating_range %}
+                  <option value="{{ r }}" {% if ratings_map|get_item:m.user.id == r %}selected{% endif %}>{{ r }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          {% endfor %}
+          <h3 style="font-size:15.5px;margin:16px 0 0;">{{ match.away_team.name }}</h3>
+          {% for m in away_roster %}
+            <div class="stat-input-row">
+              <span>{{ m.user.get_full_name|default:m.user.username }}</span>
+              <select name="rating_{{ m.user.id }}">
+                <option value="">-</option>
+                {% for r in rating_range %}
+                  <option value="{{ r }}" {% if ratings_map|get_item:m.user.id == r %}selected{% endif %}>{{ r }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          {% endfor %}
+        </div>
+
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-block" style="margin-top:18px;">Save Result</button>
+  </form>
+
+{% else %}
+  <div class="tabs">
+    <input type="radio" id="tab-1" name="matchtabs" checked>
+    <input type="radio" id="tab-2" name="matchtabs">
+    <input type="radio" id="tab-3" name="matchtabs">
+    <div class="tab-bar">
+      <label for="tab-1"><i class="fa-solid fa-futbol"></i> Result</label>
+      <label for="tab-2"><i class="fa-solid fa-bullseye"></i> Scorers</label>
+      <label for="tab-3"><i class="fa-solid fa-star"></i> Ratings</label>
+    </div>
+    <div class="tab-content">
+      <div class="tab-panel panel-1 card">
+        {% if match.status == 'completed' %}
+          <p class="page-sub" style="margin:0;">Final score: <strong>{{ match.home_team.name }} {{ match.home_score }} - {{ match.away_score }} {{ match.away_team.name }}</strong></p>
+        {% else %}
+          <p class="page-sub" style="margin:0;">This match hasn't been completed yet. The captain will add the result once it's played.</p>
+        {% endif %}
+      </div>
+      <div class="tab-panel panel-2 card">
+        {% for g in top_scorers %}
+          <div class="scorer-line"><span>{{ g.scorer.get_full_name|default:g.scorer.username }} <span class="page-sub" style="margin:0;">({{ g.team.name }})</span></span><strong>{{ g.goals }} goal{{ g.goals|pluralize }}</strong></div>
+        {% empty %}
+          <p class="page-sub" style="margin:0;">No scorers recorded yet.</p>
+        {% endfor %}
+      </div>
+      <div class="tab-panel panel-3 card">
+        <h3 style="margin-top:0;font-size:15.5px;">{{ match.home_team.name }}</h3>
+        {% for m in home_roster %}
+          <div class="stat-input-row"><span>{{ m.user.get_full_name|default:m.user.username }}</span>{% with r=ratings_map|get_item:m.user.id %}{% if r %}<span class="rating-pill">{{ r }}/10</span>{% else %}<span class="page-sub" style="margin:0;">Not rated</span>{% endif %}{% endwith %}</div>
+        {% endfor %}
+        <h3 style="font-size:15.5px;margin:16px 0 0;">{{ match.away_team.name }}</h3>
+        {% for m in away_roster %}
+          <div class="stat-input-row"><span>{{ m.user.get_full_name|default:m.user.username }}</span>{% with r=ratings_map|get_item:m.user.id %}{% if r %}<span class="rating-pill">{{ r }}/10</span>{% else %}<span class="page-sub" style="margin:0;">Not rated</span>{% endif %}{% endwith %}</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

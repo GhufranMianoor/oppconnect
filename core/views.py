@@ -1,5 +1,4 @@
 import calendar as cal
-from datetime import date
 
 from django.contrib import messages as flash
 from django.contrib.auth.decorators import login_required
@@ -8,14 +7,22 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from .forms import (AvailabilityForm, MatchRequestForm, MessageForm,
-                     OpenMatchRequestForm, TeamForm, TeamSearchForm)
-from .models import (Availability, Conversation, Match, MatchRequest,
-                      Notification, Team, TeamMembership)
+                     OpenMatchRequestForm, TeamForm, TeamJoinRequestForm,
+                     TeamSearchForm)
+from .models import (Availability, Conversation, Match, MatchGoal,
+                      MatchRequest, Notification, PlayerRating, Team,
+                      TeamJoinRequest, TeamMembership)
 
 
 def get_my_team(user):
     membership = TeamMembership.objects.filter(user=user).select_related("team").first()
     return membership.team if membership else None
+
+
+def get_my_membership(user, team):
+    if not team:
+        return None
+    return TeamMembership.objects.filter(user=user, team=team).first()
 
 
 @login_required
@@ -53,6 +60,7 @@ def dashboard(request):
             "date": m.date,
             "score": m.score_for(team),
             "result": m.result_for(team),
+            "id": m.id,
         }
         for m in raw_matches
     ]
@@ -132,12 +140,23 @@ def team_profile(request, pk):
             "date": m.date,
             "score": m.score_for(profile_team),
             "result": m.result_for(profile_team),
+            "id": m.id,
         }
         for m in raw_matches
     ]
+    roster = TeamMembership.objects.filter(team=profile_team).select_related("user").order_by("role", "user__first_name")
+
+    has_pending_request = False
+    if not my_team:
+        has_pending_request = TeamJoinRequest.objects.filter(
+            player=request.user, team=profile_team, status="pending"
+        ).exists()
+
     return render(request, "core/team_profile.html", {
         "profile_team": profile_team, "team": my_team, "recent_matches": recent_matches,
         "is_own": my_team and my_team.id == profile_team.id,
+        "roster": roster,
+        "has_pending_request": has_pending_request,
     })
 
 
@@ -154,7 +173,13 @@ def my_team(request):
             return redirect("core:my_team")
     else:
         form = TeamForm(instance=team)
-    return render(request, "core/my_team.html", {"team": team, "form": form})
+    membership = get_my_membership(request.user, team)
+    is_captain = bool(membership and membership.role == "captain")
+    pending_join_requests = team.join_requests.filter(status="pending").count() if is_captain else 0
+    return render(request, "core/my_team.html", {
+        "team": team, "form": form, "is_captain": is_captain,
+        "pending_join_requests": pending_join_requests,
+    })
 
 
 @login_required
@@ -279,6 +304,201 @@ def start_conversation(request, pk):
 @login_required
 def notifications_view(request):
     team = get_my_team(request.user)
-    notes = team.notifications.all()[:30]
-    team.notifications.filter(is_read=False).update(is_read=True)
+    q = Q(user=request.user)
+    if team:
+        q |= Q(team=team)
+    notes = Notification.objects.filter(q)[:30]
+    Notification.objects.filter(q, is_read=False).update(is_read=True)
     return render(request, "core/notifications.html", {"team": team, "notes": notes})
+
+
+# ---------------------------------------------------------------------
+# Join requests - a player without a team asking to join one's roster
+# ---------------------------------------------------------------------
+
+
+@login_required
+def send_join_request(request, pk):
+    team = get_object_or_404(Team, pk=pk)
+    if get_my_team(request.user):
+        flash.error(request, "You're already on a team.")
+        return redirect("core:team_profile", pk=team.pk)
+    if TeamJoinRequest.objects.filter(player=request.user, team=team, status="pending").exists():
+        flash.info(request, "You already have a pending request to this team.")
+        return redirect("core:team_profile", pk=team.pk)
+
+    if request.method == "POST":
+        form = TeamJoinRequestForm(request.POST)
+        if form.is_valid():
+            jr = form.save(commit=False)
+            jr.player = request.user
+            jr.team = team
+            jr.save()
+            Notification.objects.create(
+                team=team,
+                text=f"{request.user.get_full_name() or request.user.username} requested to join your team.",
+                link="/join-requests/",
+            )
+            flash.success(request, f"Request sent to {team.name}.")
+            return redirect("core:team_profile", pk=team.pk)
+    else:
+        form = TeamJoinRequestForm()
+    return render(request, "core/send_join_request.html", {"form": form, "team": team})
+
+
+@login_required
+def team_join_requests(request):
+    team = get_my_team(request.user)
+    if not team:
+        return redirect("core:onboard_team")
+    membership = get_my_membership(request.user, team)
+    is_captain = bool(membership and membership.role == "captain")
+    incoming = team.join_requests.filter(status="pending").select_related("player") if is_captain else []
+    history = team.join_requests.exclude(status="pending").select_related("player")[:10] if is_captain else []
+    return render(request, "core/join_requests.html", {
+        "team": team, "incoming": incoming, "history": history, "is_captain": is_captain,
+    })
+
+
+@login_required
+def respond_join_request(request, pk, action):
+    team = get_my_team(request.user)
+    jr = get_object_or_404(TeamJoinRequest, pk=pk, team=team)
+    membership = get_my_membership(request.user, team)
+    if not membership or membership.role != "captain":
+        flash.error(request, "Only the captain can respond to join requests.")
+        return redirect("core:team_join_requests")
+
+    if action == "accept":
+        if get_my_team(jr.player):
+            flash.error(request, f"{jr.player} has already joined another team.")
+        else:
+            TeamMembership.objects.create(team=team, user=jr.player, role="player")
+            jr.status = "accepted"
+            jr.save()
+            Notification.objects.create(user=jr.player, text=f"You joined {team.name}!", link=f"/my-team/")
+            flash.success(request, f"{jr.player} added to the squad.")
+    elif action == "decline":
+        jr.status = "declined"
+        jr.save()
+        Notification.objects.create(user=jr.player, text=f"{team.name} declined your request to join.")
+        flash.info(request, "Request declined.")
+    return redirect("core:team_join_requests")
+
+
+# ---------------------------------------------------------------------
+# Matches - scheduled/completed matches, and recording result/scorers/
+# ratings once a match has ended
+# ---------------------------------------------------------------------
+
+
+@login_required
+def matches_list(request):
+    team = get_my_team(request.user)
+    if not team:
+        return redirect("core:onboard_team")
+    base = Q(home_team=team) | Q(away_team=team)
+    upcoming_qs = Match.objects.filter(base, status="scheduled").select_related("home_team", "away_team").order_by("date", "time")
+    completed_qs = Match.objects.filter(base, status="completed").select_related("home_team", "away_team").order_by("-date")[:20]
+
+    upcoming = [
+        {"id": m.id, "opponent": m.opponent_for(team), "date": m.date, "time": m.time, "venue": m.venue}
+        for m in upcoming_qs
+    ]
+    completed = [
+        {"id": m.id, "opponent": m.opponent_for(team), "date": m.date, "score": m.score_for(team), "result": m.result_for(team)}
+        for m in completed_qs
+    ]
+    return render(request, "core/matches.html", {"team": team, "upcoming": upcoming, "completed": completed})
+
+
+@login_required
+def match_detail(request, pk):
+    match = get_object_or_404(Match.objects.select_related("home_team", "away_team"), pk=pk)
+    team = get_my_team(request.user)
+    if not team or team.id not in (match.home_team_id, match.away_team_id):
+        flash.error(request, "You don't have access to this match.")
+        return redirect("core:dashboard")
+
+    membership = get_my_membership(request.user, team)
+    is_captain = bool(membership and membership.role == "captain")
+
+    roster = TeamMembership.objects.filter(
+        team__in=[match.home_team, match.away_team]
+    ).select_related("user", "team").order_by("team_id", "user__first_name")
+
+    goals_map = {g.scorer_id: g.goals for g in match.goals.all()}
+    ratings_map = {r.player_id: r.rating for r in match.ratings.all()}
+
+    home_roster = [m for m in roster if m.team_id == match.home_team_id]
+    away_roster = [m for m in roster if m.team_id == match.away_team_id]
+    top_scorers = match.goals.select_related("scorer", "team").order_by("-goals")
+
+    return render(request, "core/match_detail.html", {
+        "team": team, "match": match, "is_captain": is_captain,
+        "home_roster": home_roster, "away_roster": away_roster,
+        "goals_map": goals_map, "ratings_map": ratings_map,
+        "top_scorers": top_scorers, "rating_range": range(1, 11),
+    })
+
+
+@login_required
+def submit_match_result(request, pk):
+    match = get_object_or_404(Match, pk=pk)
+    team = get_my_team(request.user)
+    if not team or team.id not in (match.home_team_id, match.away_team_id):
+        flash.error(request, "You don't have access to this match.")
+        return redirect("core:dashboard")
+
+    membership = get_my_membership(request.user, team)
+    if not membership or membership.role != "captain":
+        flash.error(request, "Only team captains can submit the match result.")
+        return redirect("core:match_detail", pk=match.pk)
+
+    if request.method != "POST":
+        return redirect("core:match_detail", pk=match.pk)
+
+    home_score = request.POST.get("home_score", "").strip()
+    away_score = request.POST.get("away_score", "").strip()
+    if home_score == "" or away_score == "":
+        flash.error(request, "Enter both team scores.")
+        return redirect("core:match_detail", pk=match.pk)
+
+    match.home_score = int(home_score)
+    match.away_score = int(away_score)
+    match.status = "completed"
+    match.save()
+
+    roster = TeamMembership.objects.filter(team__in=[match.home_team, match.away_team]).select_related("user")
+    for m in roster:
+        goals_raw = request.POST.get(f"goals_{m.user_id}", "").strip()
+        rating_raw = request.POST.get(f"rating_{m.user_id}", "").strip()
+
+        try:
+            goals_val = int(goals_raw) if goals_raw else 0
+        except ValueError:
+            goals_val = 0
+        if goals_val > 0:
+            MatchGoal.objects.update_or_create(
+                match=match, scorer=m.user, defaults={"team": m.team, "goals": goals_val}
+            )
+        else:
+            MatchGoal.objects.filter(match=match, scorer=m.user).delete()
+
+        if rating_raw:
+            try:
+                rating_val = max(1, min(10, int(rating_raw)))
+                PlayerRating.objects.update_or_create(
+                    match=match, player=m.user, defaults={"team": m.team, "rating": rating_val}
+                )
+            except ValueError:
+                pass
+
+    other_team = match.away_team if team.id == match.home_team_id else match.home_team
+    Notification.objects.create(
+        team=other_team,
+        text=f"{team.name} submitted the result for your match: {match.score_for(other_team)}.",
+        link=f"/matches/{match.pk}/",
+    )
+    flash.success(request, "Match result, scorers and ratings saved.")
+    return redirect("core:match_detail", pk=match.pk)

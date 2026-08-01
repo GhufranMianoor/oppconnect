@@ -1,5 +1,6 @@
 from django import forms
-from .models import Team, MatchRequest, Availability, Message
+
+from .models import Availability, MatchRequest, Message, Team, TeamJoinRequest
 
 
 class TeamForm(forms.ModelForm):
@@ -46,6 +47,15 @@ class MessageForm(forms.ModelForm):
         model = Message
         fields = ["text"]
         widgets = {"text": forms.TextInput(attrs={"placeholder": "Type a message...", "autocomplete": "off"})}
+
+
+class TeamJoinRequestForm(forms.ModelForm):
+    class Meta:
+        model = TeamJoinRequest
+        fields = ["message"]
+        widgets = {
+            "message": forms.Textarea(attrs={"rows": 3, "placeholder": "Tell the captain why you'd be a good fit (position, experience...)"}),
+        }
 
 
 class TeamSearchForm(forms.Form):

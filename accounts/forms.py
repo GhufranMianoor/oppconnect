@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+
 from .models import User
 
 
@@ -17,3 +18,12 @@ class SignUpForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "avatar", "position", "city", "phone", "bio"]
+        widgets = {
+            "bio": forms.Textarea(attrs={"rows": 3, "placeholder": "Tell other players about your game..."}),
+        }

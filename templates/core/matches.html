@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Matches{% endblock %}
+{% block content %}
+<h1 class="page-title">Matches</h1>
+<p class="page-sub">Your scheduled fixtures and completed match history.</p>
+
+<div class="section-head" style="margin-top:22px;"><h3>Upcoming</h3></div>
+{% for m in upcoming %}
+  <a href="{% url 'core:match_detail' m.id %}" class="request-card" style="text-decoration:none;color:inherit;">
+    <div class="request-info">
+      <div class="club-badge">{{ m.opponent.name|slice:":2"|upper }}</div>
+      <div>
+        <h4>vs {{ m.opponent.name }}</h4>
+        <div class="meta-row"><span><i class="fa-solid fa-location-dot"></i> {{ m.venue }}</span></div>
+      </div>
+    </div>
+    <div class="request-details">
+      <div><i class="fa-solid fa-calendar-days"></i> {{ m.date|date:"D, d M" }}</div>
+      <div><i class="fa-solid fa-clock"></i> {{ m.time|time:"g:i A" }}</div>
+    </div>
+  </a>
+{% empty %}
+  <p class="page-sub">No upcoming matches. Accept a match request to schedule one.</p>
+{% endfor %}
+
+<div class="section-head" style="margin-top:26px;"><h3>Completed</h3></div>
+{% for m in completed %}
+  <a href="{% url 'core:match_detail' m.id %}" class="match-row" style="text-decoration:none;color:inherit;">
+    <div class="result-chip {% if m.result == 'W' %}badge-win{% elif m.result == 'D' %}badge-draw{% else %}badge-loss{% endif %}">{{ m.result }}</div>
+    <div>
+      <div class="opp">vs {{ m.opponent.name }}</div>
+      <div class="date">{{ m.date|date:"d M Y" }}</div>
+    </div>
+    <div class="score">{{ m.score }}</div>
+  </a>
+{% empty %}
+  <p class="page-sub">No completed matches yet.</p>
+{% endfor %}
+{% endblock %}

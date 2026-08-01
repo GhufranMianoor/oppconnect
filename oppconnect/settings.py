@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import base64
+import hashlib
 import os
 from pathlib import Path
 
@@ -34,6 +36,17 @@ SECRET_KEY = os.environ.get(
     'django-insecure-80hhi*g&j5!h4fh_o#gp-q4ixvg2(%3a=*8-p6%r=)2=v-njux',
 )
 
+# Key used to encrypt chat message text at rest (Fernet/AES-128).
+# Set MESSAGE_ENCRYPTION_KEY in the environment for production so messages
+# stay decryptable across deploys/restarts even if SECRET_KEY ever rotates.
+# Falls back to a key deterministically derived from SECRET_KEY so local
+# dev works out of the box with zero extra config.
+_encryption_key_env = os.environ.get('MESSAGE_ENCRYPTION_KEY')
+if _encryption_key_env:
+    MESSAGE_ENCRYPTION_KEY = _encryption_key_env.encode()
+else:
+    MESSAGE_ENCRYPTION_KEY = base64.urlsafe_b64encode(hashlib.sha256(SECRET_KEY.encode()).digest())
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
@@ -42,7 +55,6 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-    CSRF_TRUSTED_ORIGINS = [f'https://{RENDER_EXTERNAL_HOSTNAME}']
 
 
 # Application definition
@@ -151,6 +163,29 @@ STORAGES = {
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', '')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', '')
+AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', '')
+AWS_S3_CUSTOM_DOMAIN = os.environ.get('AWS_S3_CUSTOM_DOMAIN', '')
+AWS_LOCATION = 'media'
+AWS_QUERYSTRING_AUTH = False
+AWS_DEFAULT_ACL = 'public-read'
+
+if AWS_STORAGE_BUCKET_NAME and AWS_S3_REGION_NAME:
+    try:
+        import storages  # noqa: F401
+    except ImportError as exc:
+        raise RuntimeError('django-storages is required when AWS_STORAGE_BUCKET_NAME is configured.') from exc
+
+    STORAGES['default'] = {
+        'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
+    }
+    if AWS_S3_CUSTOM_DOMAIN:
+        MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+    else:
+        MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/'
+
 AUTH_USER_MODEL = 'accounts.User'
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'core:dashboard'
@@ -171,12 +206,14 @@ else:
     else:
         EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://oppconnect-production.up.railway.app',
+]
+if RENDER_EXTERNAL_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
+
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-CSRF_TRUSTED_ORIGINS = [
-    'https://oppconnect-production.up.railway.app',
-]

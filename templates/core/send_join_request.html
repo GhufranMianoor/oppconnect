@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Join {{ team.name }}{% endblock %}
+{% block content %}
+<h1 class="page-title">Request to Join {{ team.name }}</h1>
+<p class="page-sub">The captain will review your request and can accept or decline it.</p>
+<div class="card form-card">
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-group"><label>Message to Captain</label>{{ form.message }}</div>
+    <button type="submit" class="btn btn-primary btn-block">Send Join Request</button>
+  </form>
+</div>
+{% endblock %}

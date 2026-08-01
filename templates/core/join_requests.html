@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Join Requests{% endblock %}
+{% block content %}
+<h1 class="page-title">Join Requests</h1>
+<p class="page-sub">Players asking to join {{ team.name }}.</p>
+
+{% if not is_captain %}
+  <div class="card"><p class="page-sub" style="margin:0;">Only the team captain can review join requests.</p></div>
+{% else %}
+  <div class="section-head"><h3>Pending</h3></div>
+  {% for jr in incoming %}
+    <div class="request-card">
+      <div class="request-info">
+        <a href="{% url 'accounts:player_profile' jr.player.pk %}" style="display:flex;gap:14px;align-items:center;text-decoration:none;color:inherit;">
+          <div class="player-avatar" style="width:44px;height:44px;">{% if jr.player.avatar %}<img src="{{ jr.player.avatar.url }}" alt="">{% else %}{{ jr.player.initials }}{% endif %}</div>
+          <div>
+            <h4 style="margin:0 0 3px;">{{ jr.player.get_full_name|default:jr.player.username }}</h4>
+            <div class="meta-row"><span>{{ jr.player.get_position_display|default:"Player" }}</span></div>
+            {% if jr.message %}<div class="meta-row" style="margin-top:4px;"><span>&ldquo;{{ jr.message }}&rdquo;</span></div>{% endif %}
+          </div>
+        </a>
+      </div>
+      <div class="request-actions">
+        <form method="post" action="{% url 'core:respond_join_request' jr.pk 'accept' %}">
+          {% csrf_token %}
+          <button class="btn btn-primary btn-sm">Accept</button>
+        </form>
+        <form method="post" action="{% url 'core:respond_join_request' jr.pk 'decline' %}">
+          {% csrf_token %}
+          <button class="btn btn-outline btn-sm">Decline</button>
+        </form>
+      </div>
+    </div>
+  {% empty %}
+    <p class="page-sub">No pending join requests.</p>
+  {% endfor %}
+
+  <div class="section-head" style="margin-top:26px;"><h3>History</h3></div>
+  {% for jr in history %}
+    <div class="request-card">
+      <div class="request-info">
+        <div class="player-avatar" style="width:38px;height:38px;">{{ jr.player.initials }}</div>
+        <div><h4 style="margin:0;">{{ jr.player.get_full_name|default:jr.player.username }}</h4></div>
+      </div>
+      <span class="badge {% if jr.status == 'accepted' %}badge-win{% else %}badge-loss{% endif %}">{{ jr.get_status_display }}</span>
+    </div>
+  {% empty %}
+    <p class="page-sub">No past requests yet.</p>
+  {% endfor %}
+{% endif %}
+{% endblock %}

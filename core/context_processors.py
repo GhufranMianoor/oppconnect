@@ -1,10 +1,15 @@
-from .models import TeamMembership
+from django.db.models import Q
+
+from .models import Notification, TeamMembership
 
 
 def team_context(request):
     if request.user.is_authenticated:
         membership = TeamMembership.objects.filter(user=request.user).select_related("team").first()
         team = membership.team if membership else None
-        unread = team.notifications.filter(is_read=False).count() if team else 0
+        q = Q(user=request.user)
+        if team:
+            q |= Q(team=team)
+        unread = Notification.objects.filter(q, is_read=False).count()
         return {"my_team": team, "unread_count": unread}
     return {}
