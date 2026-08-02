@@ -466,13 +466,34 @@ def start_player_conversation(request, pk):
 
 @login_required
 def notifications_view(request):
-    team = get_active_team(request)
+    team_ids = list(TeamMembership.objects.filter(user=request.user).values_list("team_id", flat=True))
     q = Q(user=request.user)
-    if team:
-        q |= Q(team=team)
+    if team_ids:
+        q |= Q(team_id__in=team_ids)
     notes = Notification.objects.filter(q)[:30]
     Notification.objects.filter(q, is_read=False).update(is_read=True)
-    return render(request, "core/notifications.html", {"team": team, "notes": notes})
+
+    # Actionable items surfaced directly on this page, so a player doesn't
+    # have to go hunting for the team-invite/join-request screens:
+    # - a team invited this player -> player accepts/declines here
+    # - a player asked to join a team this user captains -> captain accepts/declines here
+    pending_invites = TeamJoinRequest.objects.filter(
+        player=request.user, status="pending", initiated_by_team=True
+    ).select_related("team")
+
+    captain_team_ids = list(
+        TeamMembership.objects.filter(user=request.user, role="captain").values_list("team_id", flat=True)
+    )
+    pending_join_requests = TeamJoinRequest.objects.filter(
+        team_id__in=captain_team_ids, status="pending", initiated_by_team=False
+    ).select_related("team", "player") if captain_team_ids else TeamJoinRequest.objects.none()
+
+    return render(request, "core/notifications.html", {
+        "team": get_active_team(request),
+        "notes": notes,
+        "pending_invites": pending_invites,
+        "pending_join_requests": pending_join_requests,
+    })
 
 
 # ---------------------------------------------------------------------
@@ -559,8 +580,8 @@ def team_join_requests(request):
 
 @login_required
 def respond_join_request(request, pk, action):
-    team = get_active_team(request)
-    jr = get_object_or_404(TeamJoinRequest, pk=pk, team=team)
+    jr = get_object_or_404(TeamJoinRequest, pk=pk)
+    team = jr.team
     membership = get_my_membership(request.user, team)
     if not membership or membership.role != "captain":
         flash.error(request, "Only the captain can respond to join requests.")
@@ -580,6 +601,9 @@ def respond_join_request(request, pk, action):
         jr.save()
         Notification.objects.create(user=jr.player, text=f"{team.name} declined your request to join.")
         flash.info(request, "Request declined.")
+    referer = request.META.get("HTTP_REFERER")
+    if referer:
+        return redirect(referer)
     return redirect("core:team_join_requests")
 
 

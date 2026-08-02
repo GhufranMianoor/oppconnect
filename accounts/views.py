@@ -87,4 +87,7 @@ def respond_team_invite(request, pk, action):
         invite.save()
         Notification.objects.create(team=invite.team, text=f"{request.user.get_full_name() or request.user.username} declined your invite.")
         flash.info(request, "Invite declined.")
+    referer = request.META.get("HTTP_REFERER")
+    if referer:
+        return redirect(referer)
     return redirect("accounts:player_profile", pk=request.user.pk)

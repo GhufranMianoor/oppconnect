@@ -2,10 +2,68 @@
 {% block title %}Notifications{% endblock %}
 {% block content %}
 <h1 class="page-title">Notifications</h1>
+
+{% if pending_invites %}
+<div class="section-head"><h3>Team Invites</h3></div>
+{% for invite in pending_invites %}
+  <div class="request-card">
+    <div class="request-info">
+      <div class="club-badge">
+        {% if invite.team.logo %}<img src="{{ invite.team.logo.url }}" alt="{{ invite.team.name }} logo">{% else %}{{ invite.team.name|slice:":2"|upper }}{% endif %}
+      </div>
+      <div>
+        <h4>{{ invite.team.name }} invited you to join</h4>
+        <div class="meta-row"><span><i class="fa-solid fa-location-dot"></i> {{ invite.team.city }}</span></div>
+      </div>
+    </div>
+    <div class="request-actions">
+      <form method="post" action="{% url 'accounts:respond_team_invite' invite.pk 'accept' %}">
+        {% csrf_token %}
+        <button class="btn btn-primary btn-sm">Accept</button>
+      </form>
+      <form method="post" action="{% url 'accounts:respond_team_invite' invite.pk 'decline' %}">
+        {% csrf_token %}
+        <button class="btn btn-outline btn-sm">Decline</button>
+      </form>
+    </div>
+  </div>
+{% endfor %}
+{% endif %}
+
+{% if pending_join_requests %}
+<div class="section-head" style="margin-top:22px;"><h3>Join Requests</h3></div>
+{% for jr in pending_join_requests %}
+  <div class="request-card">
+    <div class="request-info">
+      <a href="{% url 'accounts:player_profile' jr.player.pk %}" style="display:flex;gap:14px;align-items:center;text-decoration:none;color:inherit;">
+        <div class="player-avatar" style="width:44px;height:44px;">{% if jr.player.avatar %}<img src="{{ jr.player.avatar.url }}" alt="">{% else %}{{ jr.player.initials }}{% endif %}</div>
+        <div>
+          <h4 style="margin:0 0 3px;">{{ jr.player.get_full_name|default:jr.player.username }} wants to join {{ jr.team.name }}</h4>
+          {% if jr.message %}<div class="meta-row"><span>&ldquo;{{ jr.message }}&rdquo;</span></div>{% endif %}
+        </div>
+      </a>
+    </div>
+    <div class="request-actions">
+      <form method="post" action="{% url 'core:respond_join_request' jr.pk 'accept' %}">
+        {% csrf_token %}
+        <button class="btn btn-primary btn-sm">Accept</button>
+      </form>
+      <form method="post" action="{% url 'core:respond_join_request' jr.pk 'decline' %}">
+        {% csrf_token %}
+        <button class="btn btn-outline btn-sm">Decline</button>
+      </form>
+    </div>
+  </div>
+{% endfor %}
+{% endif %}
+
+{% if pending_invites or pending_join_requests %}
+<div class="section-head" style="margin-top:22px;"><h3>All Notifications</h3></div>
+{% endif %}
 <div class="card">
   {% for n in notes %}
     <div class="stat-row" style="padding:12px 0;">
-      <span>{{ n.text }}</span>
+      {% if n.link %}<a href="{{ n.link }}" style="color:inherit;text-decoration:none;">{{ n.text }}</a>{% else %}<span>{{ n.text }}</span>{% endif %}
       <span style="color:var(--muted);font-size:12px;">{{ n.created_at|date:"d M, g:i A" }}</span>
     </div>
   {% empty %}
