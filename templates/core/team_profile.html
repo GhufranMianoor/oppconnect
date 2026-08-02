@@ -17,13 +17,14 @@
       <span><i class="fa-solid fa-location-dot"></i> {{ profile_team.home_ground|default:profile_team.city }}, {{ profile_team.city }}</span>
     </div>
   </div>
-  {% if not is_own and team %}
-  <div style="display:flex;gap:10px;">
-    <a href="{% url 'core:start_conversation' profile_team.pk %}" class="btn btn-outline"><i class="fa-solid fa-comment-dots"></i> Message</a>
-    <a href="{% url 'core:send_match_request' profile_team.pk %}" class="btn btn-primary">Send Match Request</a>
-  </div>
-  {% elif not team %}
-  <div style="display:flex;gap:10px;">
+  {% if is_member %}
+    <span class="badge badge-win">You're on this team</span>
+  {% else %}
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    {% if team %}
+      <a href="{% url 'core:start_conversation' profile_team.pk %}" class="btn btn-outline"><i class="fa-solid fa-comment-dots"></i> Message</a>
+      <a href="{% url 'core:send_match_request' profile_team.pk %}" class="btn btn-primary">Send Match Request</a>
+    {% endif %}
     {% if has_pending_request %}
       <span class="badge badge-casual">Join Request Pending</span>
     {% else %}

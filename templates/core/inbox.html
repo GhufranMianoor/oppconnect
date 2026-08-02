@@ -2,25 +2,25 @@
 {% block title %}Messages{% endblock %}
 {% block content %}
 <h1 class="page-title">Messages</h1>
-<p class="page-sub">Direct conversations with other team captains.</p>
+<p class="page-sub">Direct conversations with other teams and individual players.</p>
 <div class="messenger">
   <div class="convo-list">
     {% for c in convo_list %}
-      <a href="{% url 'core:conversation' c.conversation.pk %}" class="convo-item">
+      <a href="{% if c.kind == 'team' %}{% url 'core:conversation' c.pk %}{% else %}{% url 'core:player_conversation' c.pk %}{% endif %}" class="convo-item">
         <div class="club-badge" style="width:38px;height:38px;font-size:12px;">
-          {% if c.other.logo %}
-            <img src="{{ c.other.logo.url }}" alt="{{ c.other.name }} logo">
+          {% if c.avatar_url %}
+            <img src="{{ c.avatar_url }}" alt="">
           {% else %}
-            {{ c.other.name|slice:":2"|upper }}
+            {{ c.name|slice:":2"|upper }}
           {% endif %}
         </div>
         <div>
-          <div class="name">{{ c.other.name }}</div>
+          <div class="name">{{ c.name }}{% if c.kind == 'player' %} <span class="page-sub" style="margin:0;font-size:10.5px;">Player</span>{% endif %}</div>
           <div class="snippet">{% if c.last %}{{ c.last.text }}{% else %}Say hello 👋{% endif %}</div>
         </div>
       </a>
     {% empty %}
-      <div style="padding:20px;color:var(--muted);font-size:13.5px;">No conversations yet. Visit a team profile to start one.</div>
+      <div style="padding:20px;color:var(--muted);font-size:13.5px;">No conversations yet. Visit a team or player profile to start one.</div>
     {% endfor %}
   </div>
   <div class="empty-state">Select a conversation to start chatting</div>

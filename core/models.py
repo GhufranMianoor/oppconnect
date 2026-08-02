@@ -182,6 +182,11 @@ class Match(models.Model):
     home_score = models.PositiveIntegerField(blank=True, null=True)
     away_score = models.PositiveIntegerField(blank=True, null=True)
     source_request = models.OneToOneField(MatchRequest, on_delete=models.SET_NULL, blank=True, null=True, related_name="match")
+    # Set when one captain asks to call the match off; the match only moves
+    # to "cancelled" once the OTHER team's captain agrees (mutual consent).
+    cancel_requested_by = models.ForeignKey(
+        Team, on_delete=models.SET_NULL, blank=True, null=True, related_name="requested_match_cancellations"
+    )
 
     class Meta:
         ordering = ["-date", "-time"]
@@ -238,6 +243,42 @@ class Conversation(models.Model):
 class Message(models.Model):
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name="messages")
     sender = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="sent_messages")
+    text = EncryptedTextField()  # encrypted at rest, decrypted transparently on read
+    sent_at = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["sent_at"]
+
+    def __str__(self):
+        return f"{self.sender}: {self.text[:30]}"
+
+
+class PlayerConversation(models.Model):
+    """A direct-message thread between two individual players (not teams)."""
+    player_a = models.ForeignKey(User, on_delete=models.CASCADE, related_name="dm_conversations_a")
+    player_b = models.ForeignKey(User, on_delete=models.CASCADE, related_name="dm_conversations_b")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("player_a", "player_b")
+
+    def other(self, user):
+        return self.player_b if self.player_a_id == user.id else self.player_a
+
+    def last_message(self):
+        return self.dm_messages.order_by("-sent_at").first()
+
+    @staticmethod
+    def between(user1, user2):
+        a, b = sorted([user1, user2], key=lambda u: u.id)
+        convo, _ = PlayerConversation.objects.get_or_create(player_a=a, player_b=b)
+        return convo
+
+
+class PlayerMessage(models.Model):
+    conversation = models.ForeignKey(PlayerConversation, on_delete=models.CASCADE, related_name="dm_messages")
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_dms")
     text = EncryptedTextField()  # encrypted at rest, decrypted transparently on read
     sent_at = models.DateTimeField(auto_now_add=True)
     read = models.BooleanField(default=False)

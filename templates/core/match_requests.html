@@ -55,8 +55,16 @@
     </div>
     <div class="request-details">
       <div><i class="fa-solid fa-calendar-days"></i> {{ r.proposed_date|date:"D, d M" }}</div>
-      <span class="badge {% if r.status == 'accepted' %}badge-win{% elif r.status == 'declined' %}badge-loss{% else %}badge-casual{% endif %}">{{ r.get_status_display }}</span>
+      <span class="badge {% if r.status == 'accepted' %}badge-win{% elif r.status == 'declined' or r.status == 'cancelled' %}badge-loss{% else %}badge-casual{% endif %}">{{ r.get_status_display }}</span>
     </div>
+    {% if r.status == 'pending' %}
+    <div class="request-actions">
+      <form method="post" action="{% url 'core:cancel_match_request' r.pk %}" onsubmit="return confirm('Cancel this match request?');">
+        {% csrf_token %}
+        <button class="btn btn-outline btn-sm">Cancel</button>
+      </form>
+    </div>
+    {% endif %}
   </div>
 {% empty %}
   <p class="page-sub">No sent requests yet.</p>
@@ -74,7 +82,16 @@
     <div class="request-details">
       <div><i class="fa-solid fa-calendar-days"></i> {{ r.proposed_date|date:"D, d M" }}</div>
       <div><i class="fa-solid fa-clock"></i> {{ r.proposed_time|time:"g:i A" }}</div>
+      <span class="badge {% if r.status == 'cancelled' %}badge-loss{% else %}badge-casual{% endif %}">{{ r.get_status_display }}</span>
     </div>
+    {% if r.status == 'pending' %}
+    <div class="request-actions">
+      <form method="post" action="{% url 'core:cancel_match_request' r.pk %}" onsubmit="return confirm('Cancel this open request?');">
+        {% csrf_token %}
+        <button class="btn btn-outline btn-sm">Cancel</button>
+      </form>
+    </div>
+    {% endif %}
   </div>
 {% empty %}
   <p class="page-sub">You haven't posted any open requests.</p>

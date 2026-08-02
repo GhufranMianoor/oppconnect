@@ -37,7 +37,9 @@ def player_profile(request, pk):
     from core.models import TeamJoinRequest, TeamMembership
 
     player = get_object_or_404(User, pk=pk)
-    membership = TeamMembership.objects.filter(user=player).select_related("team").first()
+    # A player can now belong to more than one team, so show every roster
+    # they're on rather than just the first one found.
+    memberships = TeamMembership.objects.filter(user=player).select_related("team")
     pending_invitations = []
     if player.id == request.user.id:
         pending_invitations = TeamJoinRequest.objects.filter(
@@ -47,7 +49,7 @@ def player_profile(request, pk):
         ).select_related("team")
     return render(request, "accounts/player_profile.html", {
         "player": player,
-        "membership": membership,
+        "memberships": memberships,
         "is_own": player.id == request.user.id,
         "pending_invitations": pending_invitations,
     })
@@ -72,8 +74,8 @@ def respond_team_invite(request, pk, action):
 
     invite = get_object_or_404(TeamJoinRequest, pk=pk, player=request.user, initiated_by_team=True)
     if action == "accept":
-        if TeamMembership.objects.filter(user=request.user).exists():
-            flash.error(request, "You're already on a team.")
+        if TeamMembership.objects.filter(user=request.user, team=invite.team).exists():
+            flash.error(request, "You're already on this team.")
         else:
             TeamMembership.objects.create(team=invite.team, user=request.user, role="player")
             invite.status = "accepted"

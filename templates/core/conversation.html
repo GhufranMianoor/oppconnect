@@ -5,16 +5,16 @@
 <div class="messenger">
   <div class="convo-list">
     {% for c in conversations %}
-      <a href="{% url 'core:conversation' c.pk %}" class="convo-item {% if c.pk == convo.pk %}active{% endif %}">
+      <a href="{% if c.kind == 'team' %}{% url 'core:conversation' c.pk %}{% else %}{% url 'core:player_conversation' c.pk %}{% endif %}" class="convo-item {% if c.kind == active_kind and c.pk == active_pk %}active{% endif %}">
         <div class="club-badge" style="width:38px;height:38px;font-size:12px;">
-          {% if c.other.logo %}
-            <img src="{{ c.other.logo.url }}" alt="{{ c.other.name }} logo">
+          {% if c.avatar_url %}
+            <img src="{{ c.avatar_url }}" alt="">
           {% else %}
-            {{ c.other.name|slice:":2"|upper }}
+            {{ c.name|slice:":2"|upper }}
           {% endif %}
         </div>
         <div>
-          <div class="name">{{ c.other.name }}</div>
+          <div class="name">{{ c.name }}{% if c.kind == 'player' %} <span class="page-sub" style="margin:0;font-size:10.5px;">Player</span>{% endif %}</div>
         </div>
       </a>
     {% endfor %}

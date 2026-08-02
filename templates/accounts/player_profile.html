@@ -14,6 +14,8 @@
   </div>
   {% if is_own %}
     <a href="{% url 'accounts:edit_profile' %}" class="btn btn-outline"><i class="fa-solid fa-pen"></i> Edit Profile</a>
+  {% else %}
+    <a href="{% url 'core:start_player_conversation' player.pk %}" class="btn btn-primary"><i class="fa-solid fa-comment-dots"></i> Message</a>
   {% endif %}
 </div>
 
@@ -52,8 +54,8 @@
   </div>
   <div>
     <div class="card">
-      <h3 style="margin-top:0;font-size:15.5px;">Team</h3>
-      {% if membership %}
+      <h3 style="margin-top:0;font-size:15.5px;">{{ memberships|length|pluralize:"Team,Teams" }}</h3>
+      {% for membership in memberships %}
         <a href="{% url 'core:team_profile' membership.team.pk %}" class="team-list-card" style="text-decoration:none;color:inherit;">
           <div class="team-list-left">
             <div class="club-badge">{{ membership.team.name|slice:":2"|upper }}</div>
@@ -63,9 +65,9 @@
             </div>
           </div>
         </a>
-      {% else %}
+      {% empty %}
         <p class="page-sub" style="margin:0;">Not on a team yet.</p>
-      {% endif %}
+      {% endfor %}
     </div>
   </div>
 </div>

@@ -28,6 +28,7 @@
       <li><a href="{% url 'core:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-house"></i></span> Dashboard</a></li>
       <li><a href="{% url 'core:matches' %}" class="{% if request.resolver_match.url_name == 'matches' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-futbol"></i></span> Matches</a></li>
       <li><a href="{% url 'core:find_teams' %}" class="{% if request.resolver_match.url_name == 'find_teams' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-magnifying-glass"></i></span> Find Teams</a></li>
+      <li><a href="{% url 'core:find_players' %}" class="{% if request.resolver_match.url_name == 'find_players' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-user-group"></i></span> Find Players</a></li>
       <li><a href="{% url 'core:match_requests' %}" class="{% if request.resolver_match.url_name == 'match_requests' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-clipboard-list"></i></span> Match Requests</a></li>
       <li><a href="{% url 'core:my_team' %}" class="{% if request.resolver_match.url_name == 'my_team' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-users"></i></span> My Team</a></li>
       <li><a href="{% url 'core:inbox' %}" class="{% if request.resolver_match.url_name == 'inbox' or request.resolver_match.url_name == 'conversation' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-comment-dots"></i></span> Messages</a></li>
@@ -43,17 +44,43 @@
     </div>
     {% if my_team %}
     <div class="sidebar-footer">
-      <div class="team-mini-logo">
-        {% if my_team.logo %}
-          <img src="{{ my_team.logo.url }}" alt="{{ my_team.name }} logo">
-        {% else %}
-          {{ my_team.name|slice:":2"|upper }}
-        {% endif %}
-      </div>
-      <div>
-        <div>{{ my_team.name }}</div>
-        <div class="role">Captain</div>
-      </div>
+      {% if my_teams|length > 1 %}
+        <details style="width:100%;">
+          <summary style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;">
+            <div class="team-mini-logo">
+              {% if my_team.logo %}
+                <img src="{{ my_team.logo.url }}" alt="{{ my_team.name }} logo">
+              {% else %}
+                {{ my_team.name|slice:":2"|upper }}
+              {% endif %}
+            </div>
+            <div>
+              <div>{{ my_team.name }} <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i></div>
+              <div class="role">Switch team</div>
+            </div>
+          </summary>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:2px;">
+            {% for t in my_teams %}
+              <a href="{% url 'core:set_active_team' t.pk %}" style="color:inherit;text-decoration:none;padding:6px 4px;font-size:12.5px;{% if t.pk == my_team.pk %}font-weight:800;{% endif %}">
+                {% if t.pk == my_team.pk %}<i class="fa-solid fa-check" style="width:14px;"></i>{% endif %} {{ t.name }}
+              </a>
+            {% endfor %}
+            <a href="{% url 'core:onboard_team' %}" style="color:inherit;text-decoration:none;padding:6px 4px;font-size:12.5px;"><i class="fa-solid fa-plus" style="width:14px;"></i> Create New Team</a>
+          </div>
+        </details>
+      {% else %}
+        <div class="team-mini-logo">
+          {% if my_team.logo %}
+            <img src="{{ my_team.logo.url }}" alt="{{ my_team.name }} logo">
+          {% else %}
+            {{ my_team.name|slice:":2"|upper }}
+          {% endif %}
+        </div>
+        <div>
+          <div>{{ my_team.name }}</div>
+          <div class="role">{% for t in my_teams %}{% if t.pk == my_team.pk %}Active Team{% endif %}{% endfor %}</div>
+        </div>
+      {% endif %}
     </div>
     {% endif %}
   </aside>

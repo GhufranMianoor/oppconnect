@@ -18,6 +18,43 @@
   {% endif %}
 </div>
 
+{% if match.status == 'scheduled' %}
+  {% if cancel_requested_by_me %}
+    <div class="card" style="margin-bottom:18px;border-color:var(--amber);background:#fffbeb;">
+      <p style="margin:0 0 10px;font-size:13.5px;"><i class="fa-solid fa-hourglass-half"></i> You requested to cancel this match. Waiting for {{ opponent.name }} to respond.</p>
+      {% if is_captain %}
+        <form method="post" action="{% url 'core:respond_cancel_match' match.pk 'withdraw' %}">
+          {% csrf_token %}
+          <button class="btn btn-outline btn-sm">Withdraw Request</button>
+        </form>
+      {% endif %}
+    </div>
+  {% elif cancel_requested_by_them %}
+    <div class="card" style="margin-bottom:18px;border-color:var(--amber);background:#fffbeb;">
+      <p style="margin:0 0 10px;font-size:13.5px;"><i class="fa-solid fa-triangle-exclamation"></i> {{ match.cancel_requested_by.name }} requested to cancel this match. Both captains need to agree.</p>
+      {% if is_captain %}
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <form method="post" action="{% url 'core:respond_cancel_match' match.pk 'accept' %}">
+            {% csrf_token %}
+            <button class="btn btn-primary btn-sm">Agree to Cancel</button>
+          </form>
+          <form method="post" action="{% url 'core:respond_cancel_match' match.pk 'decline' %}">
+            {% csrf_token %}
+            <button class="btn btn-outline btn-sm">Keep Match</button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  {% elif is_captain %}
+    <div style="margin-bottom:18px;">
+      <form method="post" action="{% url 'core:request_cancel_match' match.pk %}" onsubmit="return confirm('Request to cancel this match? It will only be cancelled once the other captain agrees.');">
+        {% csrf_token %}
+        <button class="btn btn-outline btn-sm"><i class="fa-solid fa-ban"></i> Request Cancellation</button>
+      </form>
+    </div>
+  {% endif %}
+{% endif %}
+
 {% if is_captain %}
   <p class="page-sub">Enter the final score, who scored, and rate each player once the match has ended. You can update these any time.</p>
   <form method="post" action="{% url 'core:submit_match_result' match.pk %}">

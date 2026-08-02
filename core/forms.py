@@ -1,6 +1,9 @@
 from django import forms
 
-from .models import Availability, MatchRequest, Message, Team, TeamJoinRequest
+from accounts.models import POSITION_CHOICES
+
+from .models import (Availability, MatchRequest, Message, PlayerMessage,
+                      Team, TeamJoinRequest)
 
 
 class TeamForm(forms.ModelForm):
@@ -62,4 +65,17 @@ class TeamSearchForm(forms.Form):
     q = forms.CharField(required=False, label="Search")
     level = forms.ChoiceField(required=False, choices=[("", "Any Level")] + Team._meta.get_field("level").choices)
     playstyle = forms.ChoiceField(required=False, choices=[("", "Any Playstyle")] + Team._meta.get_field("playstyle").choices)
+    city = forms.CharField(required=False)
+
+
+class PlayerMessageForm(forms.ModelForm):
+    class Meta:
+        model = PlayerMessage
+        fields = ["text"]
+        widgets = {"text": forms.TextInput(attrs={"placeholder": "Type a message...", "autocomplete": "off"})}
+
+
+class PlayerSearchForm(forms.Form):
+    q = forms.CharField(required=False, label="Search")
+    position = forms.ChoiceField(required=False, choices=[("", "Any Position")] + POSITION_CHOICES)
     city = forms.CharField(required=False)

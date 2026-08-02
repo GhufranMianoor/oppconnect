@@ -38,4 +38,24 @@
     {% endif %}
   </div>
 </div>
+
+{% if my_teams|length > 1 %}
+<div class="card" style="margin-top:18px;">
+  <h3 style="margin-top:0;font-size:15.5px;">Your Teams</h3>
+  {% for t in my_teams %}
+    <a href="{% url 'core:set_active_team' t.pk %}" class="team-list-card" style="text-decoration:none;color:inherit;{% if t.pk == team.pk %}border-color:var(--accent);{% endif %}">
+      <div class="team-list-left">
+        <div class="club-badge">
+          {% if t.logo %}<img src="{{ t.logo.url }}" alt="{{ t.name }} logo">{% else %}{{ t.name|slice:":2"|upper }}{% endif %}
+        </div>
+        <div>
+          <h4 style="margin:0 0 3px;font-size:14.5px;">{{ t.name }}{% if t.pk == team.pk %} <span class="badge badge-win">Active</span>{% endif %}</h4>
+          <div class="meta-row"><span><i class="fa-solid fa-location-dot"></i> {{ t.city }}</span></div>
+        </div>
+      </div>
+    </a>
+  {% endfor %}
+</div>
+{% endif %}
+<a href="{% url 'core:onboard_team' %}" class="btn btn-outline btn-block" style="margin-top:14px;"><i class="fa-solid fa-plus"></i> Create Another Team</a>
 {% endblock %}

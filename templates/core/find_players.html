@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Find Players{% endblock %}
+{% block content %}
+<h1 class="page-title">Find Players</h1>
+<p class="page-sub">Browse other players, view their profiles, and message them directly.</p>
+
+<form method="get" class="filters-bar card">
+  <div class="form-group">
+    <label>Search</label>
+    {{ form.q }}
+  </div>
+  <div class="form-group">
+    <label>Position</label>
+    {{ form.position }}
+  </div>
+  <div class="form-group">
+    <label>City</label>
+    {{ form.city }}
+  </div>
+  <button class="btn btn-primary" type="submit">Apply Filters</button>
+</form>
+
+<div style="margin-top:20px;">
+{% for entry in players %}
+  <div class="team-list-card">
+    <a href="{% url 'accounts:player_profile' entry.player.pk %}" class="team-list-left" style="text-decoration:none;color:inherit;">
+      <div class="player-avatar">
+        {% if entry.player.avatar %}<img src="{{ entry.player.avatar.url }}" alt="">{% else %}{{ entry.player.initials }}{% endif %}
+      </div>
+      <div>
+        <h4 style="margin:0 0 3px;font-size:14.5px;">{{ entry.player.get_full_name|default:entry.player.username }}</h4>
+        <div class="meta-row">
+          {% if entry.player.position %}<span>{{ entry.player.get_position_display }}</span>{% endif %}
+          <span><i class="fa-solid fa-location-dot"></i> {{ entry.player.city|default:"Karachi" }}</span>
+        </div>
+        <div class="meta-row" style="margin-top:4px;">
+          {% for t in entry.teams %}
+            <span class="badge badge-casual">{{ t.name }}</span>
+          {% empty %}
+            <span class="badge badge-casual">Free Agent</span>
+          {% endfor %}
+        </div>
+      </div>
+    </a>
+    <div class="team-metrics">
+      <a href="{% url 'core:start_player_conversation' entry.player.pk %}" class="btn btn-outline btn-sm"><i class="fa-solid fa-comment-dots"></i> Message</a>
+      <a href="{% url 'accounts:player_profile' entry.player.pk %}" class="btn btn-primary btn-sm">View Profile</a>
+    </div>
+  </div>
+{% empty %}
+  <p class="page-sub">No players match your filters yet.</p>
+{% endfor %}
+</div>
+{% endblock %}

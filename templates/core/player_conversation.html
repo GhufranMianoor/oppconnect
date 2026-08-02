@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Chat with {{ other.get_full_name|default:other.username }}{% endblock %}
+{% block content %}
+<h1 class="page-title">Messages</h1>
+<div class="messenger">
+  <div class="convo-list">
+    {% for c in conversations %}
+      <a href="{% if c.kind == 'team' %}{% url 'core:conversation' c.pk %}{% else %}{% url 'core:player_conversation' c.pk %}{% endif %}" class="convo-item {% if c.kind == active_kind and c.pk == active_pk %}active{% endif %}">
+        <div class="club-badge" style="width:38px;height:38px;font-size:12px;">
+          {% if c.avatar_url %}
+            <img src="{{ c.avatar_url }}" alt="">
+          {% else %}
+            {{ c.name|slice:":2"|upper }}
+          {% endif %}
+        </div>
+        <div>
+          <div class="name">{{ c.name }}{% if c.kind == 'player' %} <span class="page-sub" style="margin:0;font-size:10.5px;">Player</span>{% endif %}</div>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+  <div class="chat-pane">
+    <div class="chat-header">
+      <div class="player-avatar" style="width:34px;height:34px;font-size:11px;">
+        {% if other.avatar %}
+          <img src="{{ other.avatar.url }}" alt="">
+        {% else %}
+          {{ other.initials }}
+        {% endif %}
+      </div>
+      <a href="{% url 'accounts:player_profile' other.pk %}" style="color:inherit;text-decoration:none;">{{ other.get_full_name|default:other.username }}</a>
+    </div>
+    <div class="chat-body">
+      {% for m in msgs %}
+        <div class="bubble {% if m.sender_id == request.user.id %}mine{% else %}theirs{% endif %}">
+          {{ m.text }}
+          <span class="time">{{ m.sent_at|date:"g:i A, d M" }}</span>
+        </div>
+      {% empty %}
+        <div class="empty-state">No messages yet. Say hello 👋</div>
+      {% endfor %}
+    </div>
+    <form method="post" class="chat-input">
+      {% csrf_token %}
+      {{ form.text }}
+      <button type="submit" class="btn btn-primary">Send</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

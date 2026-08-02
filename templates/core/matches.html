@@ -17,6 +17,7 @@
     <div class="request-details">
       <div><i class="fa-solid fa-calendar-days"></i> {{ m.date|date:"D, d M" }}</div>
       <div><i class="fa-solid fa-clock"></i> {{ m.time|time:"g:i A" }}</div>
+      {% if m.cancel_pending %}<span class="badge badge-draw">Cancellation Pending</span>{% endif %}
     </div>
   </a>
 {% empty %}
@@ -35,5 +36,18 @@
   </a>
 {% empty %}
   <p class="page-sub">No completed matches yet.</p>
+{% endfor %}
+
+<div class="section-head" style="margin-top:26px;"><h3>Cancelled</h3></div>
+{% for m in cancelled %}
+  <a href="{% url 'core:match_detail' m.id %}" class="match-row" style="text-decoration:none;color:inherit;">
+    <div class="result-chip badge-loss"><i class="fa-solid fa-ban"></i></div>
+    <div>
+      <div class="opp">vs {{ m.opponent.name }}</div>
+      <div class="date">{{ m.date|date:"d M Y" }}</div>
+    </div>
+  </a>
+{% empty %}
+  <p class="page-sub">No cancelled matches.</p>
 {% endfor %}
 {% endblock %}
