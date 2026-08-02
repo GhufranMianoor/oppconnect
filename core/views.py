@@ -572,7 +572,7 @@ def team_join_requests(request):
     membership = get_my_membership(request.user, team)
     is_captain = bool(membership and membership.role == "captain")
     incoming = team.join_requests.filter(status="pending", initiated_by_team=False).select_related("player") if is_captain else []
-    history = team.join_requests.exclude(status="pending").select_related("player")[:10] if is_captain else []
+    history = team.join_requests.select_related("player")[:10] if is_captain else []
     return render(request, "core/join_requests.html", {
         "team": team, "incoming": incoming, "history": history, "is_captain": is_captain,
     })
