@@ -12,10 +12,18 @@ def team_context(request):
         if memberships:
             active_id = request.session.get("active_team_id")
             team = next((m.team for m in memberships if m.team_id == active_id), None) or memberships[0].team
-        q = Q(user=request.user)
-        if team:
-            q |= Q(team=team)
-        unread = Notification.objects.filter(q, is_read=False).count()
+
+        team_ids = [m.team_id for m in memberships]
+        personal_unread = Notification.objects.filter(user=request.user, is_read=False).count()
+        team_unread = 0
+        if team_ids:
+            # Team-wide notifications track read state per-player (read_by),
+            # not a single shared is_read flag - otherwise one teammate
+            # opening their notifications would mark them read for everyone.
+            team_unread = Notification.objects.filter(
+                team_id__in=team_ids, user__isnull=True
+            ).exclude(read_by=request.user).count()
+        unread = personal_unread + team_unread
         return {
             "my_team": team,
             "my_teams": [m.team for m in memberships],

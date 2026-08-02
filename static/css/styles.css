@@ -261,6 +261,18 @@ img{max-width:100%;}
 .metric .num{font-weight:800;font-size:14.5px;}
 .metric .label{font-size:11px;color:var(--muted);}
 
+.team-picker{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+.team-picker-item{
+  display:flex;align-items:center;gap:8px;padding:6px 16px 6px 6px;border-radius:999px;
+  border:1.5px solid var(--border);background:#fff;text-decoration:none;color:var(--text);
+  font-size:13.5px;font-weight:700;transition:border-color .15s,background .15s,color .15s;
+}
+.team-picker-item:hover{border-color:var(--accent);}
+.team-picker-item .club-badge{width:30px;height:30px;font-size:11.5px;}
+.team-picker-item.active{border-color:var(--accent);background:var(--accent-light);color:var(--accent-dark);}
+.team-picker-item.team-picker-add{border-style:dashed;color:var(--muted);padding:6px 16px;}
+.team-picker-item.team-picker-add:hover{color:var(--accent);}
+
 .cta-band{
   background:var(--accent-light);border-radius:var(--radius);padding:20px 24px;
   display:flex;justify-content:space-between;align-items:center;margin:24px 0;

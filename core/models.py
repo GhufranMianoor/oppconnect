@@ -245,13 +245,21 @@ class Message(models.Model):
     sender = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="sent_messages")
     text = EncryptedTextField()  # encrypted at rest, decrypted transparently on read
     sent_at = models.DateTimeField(auto_now_add=True)
-    read = models.BooleanField(default=False)
+    read = models.BooleanField(default=False)  # kept for backwards compatibility; unused for display now
+    read_by = models.ManyToManyField(
+        User, blank=True, related_name="read_team_messages"
+    )  # per-player read state, since a message's recipient is a whole team,
+       # not a single person - one teammate opening the thread shouldn't
+       # mark it read for everyone else on the team.
 
     class Meta:
         ordering = ["sent_at"]
 
     def __str__(self):
         return f"{self.sender}: {self.text[:30]}"
+
+    def is_read_by(self, user):
+        return self.read_by.filter(pk=user.pk).exists()
 
 
 class PlayerConversation(models.Model):
@@ -298,11 +306,21 @@ class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications", null=True, blank=True)
     text = models.CharField(max_length=255)
     link = models.CharField(max_length=255, blank=True)
-    is_read = models.BooleanField(default=False)
+    is_read = models.BooleanField(default=False)  # read state for a personal (user-targeted) notification
+    read_by = models.ManyToManyField(
+        User, blank=True, related_name="read_team_notifications"
+    )  # per-player read state for team-wide notifications - so one teammate
+       # opening their notifications doesn't mark it read for everyone else
+       # on the team; only used when `team` is set.
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at"]
+
+    def is_read_by(self, user):
+        if self.team_id and not self.user_id:
+            return self.read_by.filter(pk=user.pk).exists()
+        return self.is_read
 
 
 class TeamJoinRequest(models.Model):

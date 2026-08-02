@@ -30,7 +30,7 @@
       <li><a href="{% url 'core:find_teams' %}" class="{% if request.resolver_match.url_name == 'find_teams' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-magnifying-glass"></i></span> Find Teams</a></li>
       <li><a href="{% url 'core:find_players' %}" class="{% if request.resolver_match.url_name == 'find_players' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-user-group"></i></span> Find Players</a></li>
       <li><a href="{% url 'core:match_requests' %}" class="{% if request.resolver_match.url_name == 'match_requests' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-clipboard-list"></i></span> Match Requests</a></li>
-      <li><a href="{% url 'core:my_team' %}" class="{% if request.resolver_match.url_name == 'my_team' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-users"></i></span> My Team</a></li>
+      <li><a href="{% url 'core:my_team' %}" class="{% if request.resolver_match.url_name == 'my_team' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-users"></i></span> My Teams</a></li>
       <li><a href="{% url 'core:inbox' %}" class="{% if request.resolver_match.url_name == 'inbox' or request.resolver_match.url_name == 'conversation' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-comment-dots"></i></span> Messages</a></li>
       <li><a href="{% url 'core:notifications' %}" class="{% if request.resolver_match.url_name == 'notifications' %}active{% endif %}"><span class="icon"><i class="fa-solid fa-bell"></i></span> Notifications{% if unread_count %}<span class="badge-count">{{ unread_count }}</span>{% endif %}</a></li>
       <li>

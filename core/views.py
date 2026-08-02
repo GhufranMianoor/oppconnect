@@ -160,7 +160,7 @@ def dashboard(request):
         "today": today,
         "prev_month": prev_month, "prev_year": prev_year,
         "next_month": next_month, "next_year": next_year,
-        "unread_notifications": team.notifications.filter(is_read=False).count(),
+        "unread_notifications": team.notifications.filter(user__isnull=True).exclude(read_by=request.user).count(),
     }
     return render(request, "core/dashboard.html", context)
 
@@ -226,6 +226,32 @@ def find_players(request):
 
 
 @login_required
+def remove_player(request, team_pk, player_pk):
+    team = get_object_or_404(Team, pk=team_pk)
+    membership = get_my_membership(request.user, team)
+    if not membership or membership.role != "captain":
+        flash.error(request, "Only the captain can remove players.")
+        return redirect("core:team_profile", pk=team.pk)
+
+    target = TeamMembership.objects.filter(team=team, user_id=player_pk).select_related("user").first()
+    if not target:
+        flash.error(request, "That player isn't on this roster.")
+        return redirect("core:team_profile", pk=team.pk)
+    if target.user_id == request.user.id:
+        flash.error(request, "You can't remove yourself as captain. Transfer captaincy first, or delete the team instead.")
+        return redirect("core:team_profile", pk=team.pk)
+
+    player_name = target.user.get_full_name() or target.user.username
+    target.delete()
+    Notification.objects.create(
+        user_id=player_pk,
+        text=f"You were removed from {team.name}.",
+    )
+    flash.success(request, f"{player_name} has been removed from the team.")
+    return redirect("core:team_profile", pk=team.pk)
+
+
+@login_required
 def team_profile(request, pk):
     profile_team = get_object_or_404(Team, pk=pk)
     my_team = get_active_team(request)
@@ -273,7 +299,13 @@ def my_team(request):
     team = get_active_team(request)
     if not team:
         return redirect("core:onboard_team")
+    membership = get_my_membership(request.user, team)
+    is_captain = bool(membership and membership.role == "captain")
+
     if request.method == "POST":
+        if not is_captain:
+            flash.error(request, "Only the team captain can edit the team profile.")
+            return redirect("core:my_team")
         form = TeamForm(request.POST, request.FILES, instance=team)
         if form.is_valid():
             form.save()
@@ -281,8 +313,6 @@ def my_team(request):
             return redirect("core:my_team")
     else:
         form = TeamForm(instance=team)
-    membership = get_my_membership(request.user, team)
-    is_captain = bool(membership and membership.role == "captain")
     pending_join_requests = team.join_requests.filter(status="pending", initiated_by_team=False).count() if is_captain else 0
     my_teams = get_user_teams(request.user)
     return render(request, "core/my_team.html", {
@@ -410,7 +440,8 @@ def conversation_view(request, pk):
             return redirect("core:conversation", pk=convo.pk)
     else:
         form = MessageForm()
-    convo.messages.exclude(sender=team).update(read=True)
+    for m in convo.messages.exclude(sender=team):
+        m.read_by.add(request.user)
     conversations = build_convo_list(request, team)
     return render(request, "core/conversation.html", {
         "team": team, "convo": convo, "other": other, "msgs": convo.messages.all(), "form": form,
@@ -470,8 +501,15 @@ def notifications_view(request):
     q = Q(user=request.user)
     if team_ids:
         q |= Q(team_id__in=team_ids)
-    notes = Notification.objects.filter(q)[:30]
-    Notification.objects.filter(q, is_read=False).update(is_read=True)
+    notes = list(Notification.objects.filter(q)[:30])
+
+    personal_ids = [n.id for n in notes if n.user_id]
+    if personal_ids:
+        Notification.objects.filter(id__in=personal_ids, is_read=False).update(is_read=True)
+
+    team_notes = [n for n in notes if n.team_id and not n.user_id]
+    for n in team_notes:
+        n.read_by.add(request.user)
 
     # Actionable items surfaced directly on this page, so a player doesn't
     # have to go hunting for the team-invite/join-request screens:

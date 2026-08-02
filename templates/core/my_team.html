@@ -1,10 +1,33 @@
 {% extends "base.html" %}
-{% block title %}My Team{% endblock %}
+{% block title %}My Teams{% endblock %}
 {% block content %}
-<h1 class="page-title">My Team</h1>
-<p class="page-sub">Manage your team profile, level, playstyle and home ground.</p>
+<h1 class="page-title">My Teams</h1>
+<p class="page-sub">
+  {% if my_teams|length > 1 %}
+    Pick a team below to manage its profile, level, playstyle and home ground.
+  {% else %}
+    Manage your team profile, level, playstyle and home ground.
+  {% endif %}
+</p>
+
+{% if my_teams|length > 1 %}
+<div class="team-picker">
+  {% for t in my_teams %}
+    <a href="{% url 'core:set_active_team' t.pk %}" class="team-picker-item {% if t.pk == team.pk %}active{% endif %}">
+      <span class="club-badge">
+        {% if t.logo %}<img src="{{ t.logo.url }}" alt="{{ t.name }} logo">{% else %}{{ t.name|slice:":2"|upper }}{% endif %}
+      </span>
+      {{ t.name }}
+    </a>
+  {% endfor %}
+  <a href="{% url 'core:onboard_team' %}" class="team-picker-item team-picker-add">
+    <i class="fa-solid fa-plus"></i> Add Team
+  </a>
+</div>
+{% endif %}
 
 <div class="two-col">
+  {% if is_captain %}
   <div class="card form-card">
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
@@ -22,6 +45,26 @@
       <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
     </form>
   </div>
+  {% else %}
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;color:var(--muted);font-size:12.5px;">
+      <i class="fa-solid fa-lock"></i> Only the captain can edit this team's details.
+    </div>
+    <div class="club-badge" style="width:64px;height:64px;font-size:20px;margin-bottom:14px;">
+      {% if team.logo %}<img src="{{ team.logo.url }}" alt="{{ team.name }} logo">{% else %}{{ team.name|slice:":2"|upper }}{% endif %}
+    </div>
+    <div class="stats-list">
+      <div class="stat-row"><span>Team Name</span><strong>{{ team.name }}</strong></div>
+      <div class="stat-row"><span>Home Ground</span><strong>{{ team.home_ground|default:"—" }}</strong></div>
+      <div class="stat-row"><span>City</span><strong>{{ team.city }}</strong></div>
+      <div class="stat-row"><span>Level</span><strong>{{ team.get_level_display }}</strong></div>
+      <div class="stat-row"><span>Playstyle</span><strong>{{ team.get_playstyle_display }}</strong></div>
+    </div>
+    {% if team.bio %}
+      <p class="page-sub" style="margin:14px 0 0;">{{ team.bio }}</p>
+    {% endif %}
+  </div>
+  {% endif %}
 
   <div class="card">
     <h3 style="margin-top:0;font-size:15.5px;">Overview</h3>
@@ -36,26 +79,9 @@
         <i class="fa-solid fa-user-plus"></i> Join Requests{% if pending_join_requests %} <span class="badge-count" style="position:static;margin-left:4px;">{{ pending_join_requests }}</span>{% endif %}
       </a>
     {% endif %}
+    {% if my_teams|length <= 1 %}
+      <a href="{% url 'core:onboard_team' %}" class="btn btn-outline btn-block" style="margin-top:10px;"><i class="fa-solid fa-plus"></i> Create Another Team</a>
+    {% endif %}
   </div>
 </div>
-
-{% if my_teams|length > 1 %}
-<div class="card" style="margin-top:18px;">
-  <h3 style="margin-top:0;font-size:15.5px;">Your Teams</h3>
-  {% for t in my_teams %}
-    <a href="{% url 'core:set_active_team' t.pk %}" class="team-list-card" style="text-decoration:none;color:inherit;{% if t.pk == team.pk %}border-color:var(--accent);{% endif %}">
-      <div class="team-list-left">
-        <div class="club-badge">
-          {% if t.logo %}<img src="{{ t.logo.url }}" alt="{{ t.name }} logo">{% else %}{{ t.name|slice:":2"|upper }}{% endif %}
-        </div>
-        <div>
-          <h4 style="margin:0 0 3px;font-size:14.5px;">{{ t.name }}{% if t.pk == team.pk %} <span class="badge badge-win">Active</span>{% endif %}</h4>
-          <div class="meta-row"><span><i class="fa-solid fa-location-dot"></i> {{ t.city }}</span></div>
-        </div>
-      </div>
-    </a>
-  {% endfor %}
-</div>
-{% endif %}
-<a href="{% url 'core:onboard_team' %}" class="btn btn-outline btn-block" style="margin-top:14px;"><i class="fa-solid fa-plus"></i> Create Another Team</a>
 {% endblock %}

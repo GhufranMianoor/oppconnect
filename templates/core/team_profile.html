@@ -51,15 +51,21 @@
         <div class="tab-content">
           <div class="tab-panel panel-1">
             {% for m in roster %}
-              <a href="{% url 'accounts:player_profile' m.user.pk %}" class="roster-row" style="text-decoration:none;color:inherit;">
-                <div class="roster-left">
+              <div class="roster-row">
+                <a href="{% url 'accounts:player_profile' m.user.pk %}" class="roster-left" style="text-decoration:none;color:inherit;">
                   <div class="player-avatar">{% if m.user.avatar %}<img src="{{ m.user.avatar.url }}" alt="">{% else %}{{ m.user.initials }}{% endif %}</div>
                   <div>
                     <div class="player-name">{{ m.user.get_full_name|default:m.user.username }}{% if m.role == 'captain' %} <i class="fa-solid fa-star" style="color:var(--amber);font-size:11px;" title="Captain"></i>{% endif %}</div>
                     <div class="player-meta">{{ m.user.get_position_display|default:"Player" }}{% if m.position %} &middot; {{ m.position }}{% endif %}</div>
                   </div>
-                </div>
-              </a>
+                </a>
+                {% if is_captain and m.user_id != request.user.id %}
+                  <form method="post" action="{% url 'core:remove_player' profile_team.pk m.user.pk %}" onsubmit="return confirm('Remove {{ m.user.get_full_name|default:m.user.username|escapejs }} from the team?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline btn-sm">Remove</button>
+                  </form>
+                {% endif %}
+              </div>
             {% empty %}
               <p class="page-sub" style="margin:0;">No players yet.</p>
             {% endfor %}

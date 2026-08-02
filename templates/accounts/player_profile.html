@@ -14,6 +14,7 @@
   </div>
   {% if is_own %}
     <a href="{% url 'accounts:edit_profile' %}" class="btn btn-outline"><i class="fa-solid fa-pen"></i> Edit Profile</a>
+    <a href="{% url 'accounts:logout' %}"><span class="icon"><i class="fa-solid fa-right-from-bracket"></i></span> Logout</a></li>
   {% else %}
     <a href="{% url 'core:start_player_conversation' player.pk %}" class="btn btn-primary"><i class="fa-solid fa-comment-dots"></i> Message</a>
   {% endif %}
