@@ -16,7 +16,10 @@
         <div class="form-group"><label>City</label>{{ form.city }}</div>
         <div class="form-group"><label>Phone</label>{{ form.phone }}</div>
       </div>
-      <div class="form-group"><label>Password</label>{{ form.password1 }}</div>
+      <div class="form-group">
+        <label>Password</label>{{ form.password1 }}
+        <div class="field-hint" style="font-size:11.5px;color:var(--muted);margin-top:4px;">{{ form.password1.help_text|safe }}</div>
+      </div>
       <div class="form-group"><label>Confirm Password</label>{{ form.password2 }}</div>
       {% for field in form %}{% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}{% endfor %}
       <button type="submit" class="btn btn-primary btn-block">Create Account</button>

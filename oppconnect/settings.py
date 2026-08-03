@@ -130,6 +130,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {
+        'NAME': 'accounts.validators.ComplexPasswordValidator',
+    },
 ]
 
 
@@ -162,7 +165,14 @@ STORAGES = {
 }
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# Configurable so a mounted persistent volume (e.g. a Railway Volume) can be
+# pointed at via env var - without one, this defaults to a path inside the
+# app's own container filesystem, which most PaaS platforms (including
+# Railway, without a Volume attached) wipe on every deploy/restart. That's
+# why uploaded logos disappear after a deploy unless either MEDIA_ROOT is
+# pointed at a persistent volume, or the S3 storage backend below is
+# configured instead.
+MEDIA_ROOT = os.environ.get('MEDIA_ROOT', str(BASE_DIR / 'media'))
 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', '')
